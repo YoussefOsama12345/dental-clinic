@@ -1,0 +1,57 @@
+/* Command palette open/close motion */
+.command-palette-overlay[data-state='open'] {
+  animation: command-palette-overlay-in 180ms ease-out forwards;
+}
+
+.command-palette-overlay[data-state='closed'] {
+  animation: command-palette-overlay-out 160ms ease-in forwards;
+}
+
+.command-palette-content[data-state='open'] {
+  transform-origin: top center;
+  animation: command-palette-content-in 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.command-palette-content[data-state='closed'] {
+  transform-origin: top center;
+  animation: command-palette-content-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes command-palette-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes command-palette-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes command-palette-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes command-palette-content-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .command-palette-overlay[data-state],
+  .command-palette-content[data-state] {
+    animation-duration: 1ms;
+  }
+}

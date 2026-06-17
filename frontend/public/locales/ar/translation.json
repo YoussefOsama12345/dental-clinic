@@ -1,0 +1,822 @@
+{
+  "nav": {
+    "calendar": "التقويم",
+    "patients": "المرضى",
+    "appointments": "المواعيد",
+    "treatments": "العلاجات",
+    "prescriptions": "الوصفات الطبية",
+    "invoices": "الفواتير",
+    "payments": "المدفوعات",
+    "staff": "الموظفون",
+    "dentists": "أطباء الأسنان",
+    "inventory": "المخزون",
+    "analytics": "رؤى الذكاء الاصطناعي",
+    "reports": "التقارير",
+    "branches": "الفروع",
+    "logout": "تسجيل الخروج"
+  },
+  "header": {
+    "search": "بحث…",
+    "myAccount": "حسابي",
+    "manageBranches": "إدارة الفروع",
+    "switchBranch": "تبديل الفرع",
+    "logout": "تسجيل الخروج",
+    "switchToEnglish": "التبديل إلى الإنجليزية",
+    "switchToArabic": "التبديل إلى العربية"
+  },
+  "settings": {
+    "profile": "الملف الشخصي",
+    "clinic": "العيادة",
+    "security": "الأمان",
+    "notifications": "الإشعارات",
+    "billing": "الفوترة",
+    "general": "عام",
+    "plans": "الباقات",
+    "users": "المستخدمون",
+    "workingHours": "ساعات العمل",
+    "branches": "الفروع"
+  },
+  "command": {
+    "placeholder": "اكتب أمرًا أو ابحث…",
+    "noResults": "لا توجد نتائج.",
+    "navigation": "التنقل",
+    "navigate": "للتنقل",
+    "select": "للاختيار",
+    "close": "للإغلاق",
+    "ariaLabel": "لوحة الأوامر",
+    "groups": {
+      "quickActions": "إجراءات سريعة",
+      "navigation": "التنقل",
+      "patients": "المرضى",
+      "appointments": "المواعيد",
+      "dentists": "أطباء الأسنان",
+      "staff": "الموظفون"
+    },
+    "quick": {
+      "newPatient": "مريض جديد",
+      "newAppointment": "موعد جديد",
+      "newDentist": "طبيب جديد",
+      "newStaff": "موظف جديد"
+    }
+  },
+  "common": {
+    "connect": "ربط",
+    "connected": "متصل",
+    "connecting": "جارٍ الاتصال…",
+    "disconnect": "قطع الاتصال",
+    "disconnecting": "جارٍ قطع الاتصال…",
+    "refresh": "تحديث",
+    "unlimited": "غير محدود",
+    "upgrade": "ترقية",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
+    "cancel": "إلغاء",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "none": "بدون",
+    "required": "مطلوب",
+    "invalidEmail": "بريد إلكتروني غير صالح",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "details": "التفاصيل",
+    "date": "التاريخ",
+    "actions": "الإجراءات",
+    "view": "عرض",
+    "showingRange": "عرض {{from}}–{{to}} من {{total}}",
+    "yes": "نعم",
+    "no": "لا",
+    "optional": "اختياري",
+    "invalidPhone": "رقم هاتف غير صالح",
+    "unsavedChangesTitle": "تجاهل التغييرات؟",
+    "unsavedChangesDesc": "لديك تغييرات غير محفوظة. إذا غادرت الآن، ستفقد هذه التغييرات.",
+    "stay": "البقاء",
+    "discard": "تجاهل",
+    "overview": "نظرة عامة",
+    "activity": "النشاط",
+    "created": "تم الإنشاء",
+    "updated": "تم التحديث"
+  },
+  "auth": {
+    "welcomeBack": "مرحبًا بعودتك",
+    "loginSubtitle": "سجّل الدخول إلى حسابك في dentAI للمتابعة.",
+    "signIn": "تسجيل الدخول",
+    "signIn2": "تسجيل الدخول",
+    "signingIn": "جارٍ تسجيل الدخول…",
+    "signUp": "إنشاء حساب",
+    "noAccount": "ليس لديك حساب؟",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "you@example.com",
+    "studioEmailPlaceholder": "you@clinic.com",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "google": "المتابعة عبر Google",
+    "facebook": "المتابعة عبر Facebook",
+    "orContinueWithEmail": "أو تابع بالبريد الإلكتروني",
+    "orSignUpWithEmail": "أو سجّل بالبريد الإلكتروني",
+    "createAccount": "إنشاء حساب",
+    "createPassword": "أنشئ كلمة مرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+    "creatingAccount": "جارٍ إنشاء الحساب…",
+    "registerSubtitle": "ابدأ بإدارة عيادتك بذكاء أكبر مع dentAI.",
+    "fullName": "الاسم الكامل",
+    "fullNamePlaceholder": "د. أحمد محمد",
+    "agreeToThe": "أوافق على",
+    "termsOfService": "شروط الخدمة",
+    "and": "و",
+    "privacyPolicy": "سياسة الخصوصية",
+    "forgotPasswordTitle": "نسيت كلمة المرور؟",
+    "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني وسنرسل لك رمز إعادة التعيين.",
+    "sendResetCode": "إرسال رمز التعيين",
+    "sending": "جارٍ الإرسال…",
+    "backToLogin": "العودة لتسجيل الدخول",
+    "checkEmail": "تحقق من بريدك الإلكتروني للحصول على الرمز.",
+    "verifyCode": "تأكيد الرمز",
+    "verifySubtitle": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى بريدك.",
+    "yourEmail": "بريدك الإلكتروني",
+    "verifying": "جارٍ التحقق…",
+    "resendCode": "إعادة إرسال الرمز",
+    "resendIn": "إعادة الإرسال خلال {{seconds}}",
+    "didntReceive": "لم يصلك الرمز؟",
+    "securityHint": "لأمانك، لا تشارك هذا الرمز مع أي شخص.",
+    "emailStep": "البريد",
+    "verifyStep": "التحقق",
+    "passwordStep": "كلمة المرور",
+    "setNewPassword": "تعيين كلمة مرور جديدة",
+    "setPasswordSubtitle": "اختر كلمة مرور قوية لحسابك.",
+    "newPassword": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "أدخل كلمة مرور جديدة",
+    "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+    "confirmNewPasswordPlaceholder": "أعد إدخال كلمة المرور الجديدة",
+    "updatePassword": "تحديث كلمة المرور",
+    "updating": "جارٍ التحديث…",
+    "passwordUpdated": "تم تحديث كلمة المرور",
+    "passwordUpdatedSubtitle": "تم تغيير كلمة مرورك بنجاح.",
+    "redirecting": "جارٍ إعادة التوجيه…",
+    "redirectingIn": "إعادة التوجيه خلال {{seconds}} ث…",
+    "passwordRules": {
+      "minLength": "8 أحرف على الأقل",
+      "uppercase": "حرف كبير واحد على الأقل",
+      "number": "رقم واحد على الأقل",
+      "special": "رمز خاص واحد على الأقل"
+    },
+    "branding": {
+      "socialProof": "موثوق به من أكثر من 2,000 عيادة أسنان حول العالم",
+      "slide1Title": "اعثر على أي مريض",
+      "slide1With": "في",
+      "slide1Highlight": "ثوانٍ",
+      "slide1Description": "ابحث في السجلات والتاريخ المرضي والعلاجات فورًا ببحث ذكي مدعوم بالذكاء الاصطناعي.",
+      "slide2Title": "حقّق أهدافك",
+      "slide2With": "بكل",
+      "slide2Highlight": "دقة",
+      "slide2Description": "تابع الإيرادات والمواعيد والنمو بتحليلات لحظية للعيادة.",
+      "slide3Title": "سجلات بلا أوراق",
+      "slide3With": "بمنتهى",
+      "slide3Highlight": "البساطة",
+      "slide3Description": "أدِر المخططات والوصفات والفواتير في مكان واحد آمن.",
+      "slide4Title": "نمِّ عيادتك",
+      "slide4With": "بالطريقة",
+      "slide4Highlight": "الذكية",
+      "slide4Description": "احصل على رؤى ذكية تساعدك على اتخاذ قرارات أفضل كل يوم.",
+      "slide5Title": "أدِر عيادتك",
+      "slide5With": "بأقصى",
+      "slide5Highlight": "سرعة",
+      "slide5Description": "أتمتة التذكيرات والفوترة والمتابعات حتى تتفرغ لرعاية مرضاك."
+    },
+    "toast": {
+      "signedIn": "تم تسجيل الدخول بنجاح.",
+      "signInFailed": "تعذّر تسجيل الدخول.",
+      "accountCreated": "تم إنشاء الحساب. تحقق من بريدك للحصول على رمز التحقق.",
+      "createAccountFailed": "تعذّر إنشاء الحساب.",
+      "resetCodeSent": "تم إرسال رمز إعادة التعيين. تحقق من بريدك.",
+      "resetCodeFailed": "تعذّر إرسال رمز إعادة التعيين.",
+      "codeResent": "تمت إعادة إرسال الرمز. تحقق من بريدك.",
+      "resendFailed": "تعذّرت إعادة إرسال الرمز.",
+      "emailVerified": "تم تأكيد البريد الإلكتروني. يمكنك الآن تسجيل الدخول.",
+      "codeVerified": "تم تأكيد الرمز. عيّن كلمة مرور جديدة.",
+      "verifyFailed": "تعذّر التحقق من الرمز.",
+      "passwordUpdated": "تم تحديث كلمة المرور بنجاح.",
+      "passwordUpdateFailed": "تعذّر تحديث كلمة المرور."
+    }
+  },
+  "branches": {
+    "subtitle": "أدِر مواقع عيادتك وفِرقها.",
+    "addBranch": "إضافة فرع",
+    "searchBranches": "ابحث في الفروع…",
+    "branchName": "اسم الفرع",
+    "branchAddress": "العنوان",
+    "branchPhone": "الهاتف",
+    "branchManager": "المدير",
+    "branchStatus": "الحالة",
+    "branchCount": "{{count}} فروع",
+    "mainBranch": "الفرع الرئيسي",
+    "setAsMain": "تعيين كرئيسي",
+    "editBranch": "تعديل الفرع",
+    "deleteBranch": "حذف الفرع",
+    "activate": "تفعيل",
+    "deactivate": "إيقاف",
+    "manageStaff": "إدارة الموظفين",
+    "staffCol": "الموظفون",
+    "statusActive": "نشط",
+    "statusInactive": "غير نشط",
+    "activeSummary": "{{active}} من {{total}} فروع نشطة",
+    "noResults": "لا توجد فروع.",
+    "backToList": "العودة للفروع",
+    "notFound": "الفرع غير موجود",
+    "notFoundDesc": "ربما تم حذف هذا الفرع.",
+    "setActive": "تعيين كفرع نشِط",
+    "activeNow": "الفرع النشِط",
+    "info": "معلومات الفرع",
+    "city": "المدينة",
+    "stat": {
+      "team": "أعضاء الفريق"
+    }
+  },
+  "onboarding": {
+    "nextStep": "الخطوة التالية",
+    "previous": "السابق",
+    "skipForNow": "تخطٍّ الآن",
+    "progress": "التقدّم",
+    "stepOf": "الخطوة {{current}} من {{total}}",
+    "identity": {
+      "title": "لنبدأ بإعداد هويتك",
+      "subtitle": "أخبرنا قليلًا عنك وعن عيادتك.",
+      "fullName": "اسمك الكامل",
+      "fullNamePlaceholder": "د. أحمد محمد",
+      "clinicName": "اسم العيادة",
+      "clinicNamePlaceholder": "عيادة الابتسامة المشرقة",
+      "clinicNameHint": "هكذا ستظهر عيادتك للمرضى.",
+      "profilePhoto": "الصورة الشخصية",
+      "photoHint": "صيغة PNG أو JPG، بحد أقصى 2 ميجابايت.",
+      "removePhoto": "إزالة الصورة"
+    },
+    "setup": {
+      "title": "إعداد عيادتك",
+      "subtitle": "أضف بيانات التواصل الخاصة بعيادتك.",
+      "tag": "بيانات العيادة",
+      "clinicAddress": "عنوان العيادة",
+      "clinicAddressPlaceholder": "123 الشارع الرئيسي، المدينة",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "+20 100 000 0000",
+      "language": "اللغة المفضّلة",
+      "languageEn": "الإنجليزية",
+      "languageAr": "العربية"
+    },
+    "specialty": {
+      "title": "ما هو",
+      "titleHighlight": "تخصصك؟",
+      "subtitle": "اختر المجال الذي يصف عيادتك بأفضل شكل.",
+      "items": {
+        "general": {
+          "title": "طب الأسنان العام",
+          "description": "الفحوصات الدورية والتنظيف والرعاية اليومية."
+        },
+        "orthodontics": {
+          "title": "تقويم الأسنان",
+          "description": "التقويمات والمصففات وتصحيح الإطباق."
+        },
+        "pediatric": {
+          "title": "طب أسنان الأطفال",
+          "description": "رعاية متخصصة للأطفال والمراهقين."
+        },
+        "oral-surgery": {
+          "title": "جراحة الفم",
+          "description": "الخلع والزراعة والإجراءات الجراحية."
+        },
+        "cosmetic": {
+          "title": "تجميل الأسنان",
+          "description": "التبييض والقشور وتجميل الابتسامة."
+        },
+        "periodontics": {
+          "title": "أمراض اللثة",
+          "description": "صحة اللثة وعلاج الأنسجة الداعمة."
+        }
+      }
+    },
+    "voice": {
+      "title": "اختر",
+      "titleHighlight": "نبرة علامتك",
+      "subtitle": "كيف ينبغي أن يبدو dentAI عند التحدث مع مرضاك؟",
+      "items": {
+        "professional": {
+          "title": "احترافية",
+          "description": "واضحة وموثوقة ومباشرة."
+        },
+        "friendly": {
+          "title": "ودودة",
+          "description": "دافئة وقريبة ومطمئنة."
+        },
+        "bold": {
+          "title": "جريئة",
+          "description": "واثقة ومفعمة بالطاقة ومباشرة."
+        },
+        "educational": {
+          "title": "تعليمية",
+          "description": "غنية بالمعلومات ومفيدة بإرشادات واضحة."
+        },
+        "inspirational": {
+          "title": "ملهمة",
+          "description": "مُحفِّزة وباعثة على الأمل في كل رسالة."
+        }
+      }
+    },
+    "workingHours": {
+      "title": "حدّد",
+      "titleHighlight": "ساعات عملك",
+      "subtitle": "دع المرضى يعرفون مواعيد فتح عيادتك.",
+      "closed": "مغلق",
+      "to": "إلى",
+      "days": {
+        "monday": "الاثنين",
+        "tuesday": "الثلاثاء",
+        "wednesday": "الأربعاء",
+        "thursday": "الخميس",
+        "friday": "الجمعة",
+        "saturday": "السبت",
+        "sunday": "الأحد"
+      }
+    },
+    "plans": {
+      "title": "اختر باقتك",
+      "subtitle": "ابدأ مجانًا وارتقِ مع نمو عيادتك.",
+      "recommended": "موصى بها",
+      "perMonth": "/شهريًا",
+      "starter": {
+        "tier": "المبتدئة",
+        "price": "مجانًا",
+        "cta": "ابدأ الآن",
+        "features": {
+          "dentists": "حتى طبيبَي أسنان",
+          "records": "سجلات المرضى",
+          "scheduling": "جدولة المواعيد",
+          "reminders": "تذكيرات تلقائية",
+          "ai": "رؤى الذكاء الاصطناعي"
+        }
+      },
+      "pro": {
+        "tier": "الاحترافية",
+        "price": "49$",
+        "cta": "اختر الاحترافية",
+        "features": {
+          "dentists": "حتى 10 أطباء أسنان",
+          "records": "سجلات المرضى",
+          "scheduling": "جدولة المواعيد",
+          "ai": "رؤى الذكاء الاصطناعي",
+          "billing": "الفوترة والفواتير",
+          "reminders": "تذكيرات تلقائية",
+          "support": "دعم بأولوية"
+        }
+      },
+      "enterprise": {
+        "tier": "المؤسسات",
+        "price": "حسب الطلب",
+        "cta": "تواصل مع المبيعات",
+        "features": {
+          "everything": "كل ما في الاحترافية",
+          "manager": "مدير حساب مخصص",
+          "ai": "رؤى ذكاء اصطناعي متقدمة",
+          "multibranch": "إدارة فروع متعددة",
+          "hipaa": "التوافق مع HIPAA",
+          "sla": "اتفاقية مستوى خدمة مخصصة"
+        }
+      }
+    },
+    "sidebar": {
+      "identity": "الهوية",
+      "clinicSetup": "إعداد العيادة",
+      "specialty": "التخصص",
+      "workingHours": "ساعات العمل",
+      "plans": "الباقات",
+      "dashboard": "لوحة التحكم"
+    },
+    "welcome": {
+      "heading": "مرحبًا بك معنا يا {{name}}!",
+      "subtitle": "عيادتك جاهزة. لننتقل بك إلى لوحة التحكم.",
+      "goToDashboard": "الذهاب إلى لوحة التحكم",
+      "redirectingIn": "إعادة التوجيه خلال {{count}} ث…",
+      "features": {
+        "patientRecords": "سجلات المرضى",
+        "appointments": "المواعيد",
+        "aiInsights": "رؤى الذكاء الاصطناعي",
+        "billing": "الفوترة"
+      }
+    }
+  },
+  "pages": {
+    "appointments": {
+      "title": "المواعيد",
+      "subtitle": "اعرض وأدِر جدول عيادتك."
+    },
+    "patients": {
+      "title": "المرضى",
+      "subtitle": "أدِر سجلات المرضى وتاريخهم المرضي."
+    },
+    "staff": {
+      "title": "الموظفون",
+      "subtitle": "أدِر فريق العيادة وأدوارهم."
+    },
+    "treatments": {
+      "title": "العلاجات",
+      "subtitle": "تابع العلاجات والإجراءات."
+    },
+    "prescriptions": {
+      "title": "الوصفات الطبية",
+      "subtitle": "أنشئ وأدِر وصفات المرضى."
+    },
+    "invoices": {
+      "title": "الفواتير",
+      "subtitle": "أدِر الفوترة والفواتير."
+    },
+    "payments": {
+      "title": "المدفوعات",
+      "subtitle": "تابع المدفوعات والأرصدة المستحقة."
+    },
+    "dentists": {
+      "title": "أطباء الأسنان",
+      "subtitle": "أدِر فريق الأسنان لديك."
+    },
+    "imaging": {
+      "title": "الأشعة",
+      "subtitle": "اعرض وأدِر صور المرضى الشعاعية."
+    },
+    "insurance": {
+      "title": "التأمين",
+      "subtitle": "أدِر شركات التأمين والمطالبات."
+    },
+    "reports": {
+      "title": "التقارير",
+      "subtitle": "حلّل بيانات عيادتك واتجاهاتها."
+    },
+    "aiInsights": {
+      "title": "رؤى الذكاء الاصطناعي",
+      "subtitle": "توصيات ذكية لتنمية عيادتك."
+    }
+  },
+  "status": {
+    "appointment": {
+      "scheduled": "مجدول",
+      "confirmed": "مؤكّد",
+      "checked_in": "تم الحضور",
+      "in_progress": "جارٍ",
+      "completed": "مكتمل",
+      "cancelled": "ملغي",
+      "no_show": "لم يحضر"
+    },
+    "patient": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "archived": "مؤرشف"
+    }
+  },
+  "dentists": {
+    "add": "إضافة دكتور",
+    "search": "ابحث في الدكاترة…",
+    "count": "{{count}} دكتور",
+    "empty": "مفيش دكاترة بعد",
+    "emptyDesc": "أضف أول دكتور للبدء.",
+    "newTitle": "دكتور جديد",
+    "editTitle": "تعديل الدكتور",
+    "fullName": "الاسم الكامل",
+    "specialty": "التخصص",
+    "licenseNumber": "رقم الترخيص",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "experience": "سنوات الخبرة",
+    "yearsValue": "{{years}} سنة",
+    "qualificationsTitle": "المؤهلات والنبذة",
+    "qualifications": "المؤهلات",
+    "bio": "نبذة",
+    "schedule": "جدول العمل",
+    "hours": "ساعات العمل",
+    "status": "الحالة",
+    "deactivate": "إيقاف",
+    "viewProfile": "عرض الملف",
+    "backToList": "العودة للدكاترة",
+    "notFound": "الدكتور غير موجود",
+    "notFoundDesc": "ربما تم حذف هذا الدكتور.",
+    "deleteTitle": "إيقاف الدكتور؟",
+    "deleteDesc": "هيتم إيقاف {{name}} وإخفاؤه من القوائم.",
+    "professionalInfo": "المعلومات المهنية",
+    "contactInfo": "معلومات التواصل",
+    "upcoming": "القادمة",
+    "recent": "السابقة",
+    "noAppointments": "لا توجد مواعيد بعد",
+    "noPatients": "لا يوجد مرضى مرتبطون",
+    "tab": {
+      "overview": "نظرة عامة",
+      "appointments": "المواعيد",
+      "patients": "المرضى",
+      "schedule": "الجدول",
+      "performance": "الأداء",
+      "credentials": "المؤهلات"
+    },
+    "column": {
+      "name": "الدكتور",
+      "specialty": "التخصص",
+      "phone": "الهاتف",
+      "license": "الترخيص",
+      "status": "الحالة"
+    },
+    "stat": {
+      "today": "مواعيد النهاردة",
+      "patients": "المرضى"
+    },
+    "toast": {
+      "created": "تم إنشاء الطبيب بنجاح.",
+      "createFailed": "تعذّر إنشاء الطبيب.",
+      "updated": "تم تحديث الطبيب بنجاح.",
+      "updateFailed": "تعذّر تحديث الطبيب.",
+      "deactivated": "تم إيقاف الطبيب بنجاح.",
+      "deactivateFailed": "تعذّر إيقاف الطبيب."
+    },
+    "performance": "الأداء",
+    "credentials": "المؤهلات",
+    "availability": "التوفر",
+    "completedVisits": "الزيارات المكتملة"
+  },
+  "staff": {
+    "add": "إضافة موظف",
+    "search": "ابحث في الموظفين…",
+    "count": "{{count}} عضو",
+    "empty": "مفيش موظفين بعد",
+    "emptyDesc": "أضف أول عضو في الفريق للبدء.",
+    "newTitle": "موظف جديد",
+    "editTitle": "تعديل الموظف",
+    "fullName": "الاسم الكامل",
+    "role": "الدور",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "status": "الحالة",
+    "viewProfile": "عرض الملف",
+    "deleteTitle": "إزالة الموظف؟",
+    "deleteDesc": "هيتم إيقاف {{name}}.",
+    "backToList": "العودة للموظفين",
+    "notFound": "الموظف غير موجود",
+    "notFoundDesc": "ربما تم حذف هذا الموظف.",
+    "workInfo": "معلومات العمل",
+    "contactInfo": "معلومات التواصل",
+    "branch": "الفرع",
+    "filter": {
+      "all": "الكل",
+      "Doctor": "الأطباء",
+      "Reception": "الاستقبال",
+      "Nurse": "التمريض"
+    },
+    "roleName": {
+      "Doctor": "طبيب",
+      "Reception": "استقبال",
+      "Nurse": "ممرض",
+      "assistant": "مساعد",
+      "manager": "مدير",
+      "accountant": "محاسب",
+      "other": "آخر"
+    },
+    "roleOption": {
+      "reception": "استقبال",
+      "nurse": "ممرض",
+      "assistant": "مساعد",
+      "manager": "مدير",
+      "accountant": "محاسب",
+      "other": "آخر"
+    },
+    "empStatus": {
+      "active": "نشط",
+      "on_leave": "في إجازة",
+      "inactive": "غير نشط"
+    },
+    "column": {
+      "member": "العضو",
+      "role": "الدور",
+      "phone": "الهاتف",
+      "status": "الحالة"
+    },
+    "toast": {
+      "created": "تم إنشاء عضو الفريق بنجاح.",
+      "createFailed": "تعذّر إنشاء عضو الفريق.",
+      "updated": "تم تحديث عضو الفريق بنجاح.",
+      "updateFailed": "تعذّر تحديث عضو الفريق.",
+      "deleted": "تم حذف عضو الفريق بنجاح.",
+      "deleteFailed": "تعذّر حذف عضو الفريق."
+    },
+    "permissions": "الصلاحيات",
+    "accessLevel": "مستوى الوصول",
+    "accessEnabled": "مفعّل",
+    "accessLimited": "محدود",
+    "workingDays": "أيام العمل",
+    "defaultWorkingDays": "من الأحد إلى الخميس",
+    "shift": "الوردية",
+    "availability": "التوفر",
+    "documents": "المستندات",
+    "documentsPlaceholder": "يمكن إرفاق العقود وبطاقات الهوية ومستندات الموارد البشرية هنا عند تفعيل وحدة المستندات.",
+    "compliance": "الامتثال",
+    "profileComplete": "الملف مكتمل",
+    "tab": {
+      "overview": "نظرة عامة",
+      "schedule": "الجدول",
+      "permissions": "الصلاحيات",
+      "documents": "المستندات",
+      "activity": "النشاط"
+    },
+    "permission": {
+      "manageAppointments": "إدارة المواعيد",
+      "registerPatients": "تسجيل المرضى",
+      "viewPatientContact": "عرض بيانات تواصل المرضى",
+      "exportSchedules": "تصدير الجداول",
+      "viewAppointments": "عرض المواعيد",
+      "prepareClinicalNotes": "تحضير الملاحظات الطبية",
+      "updateVisitStatus": "تحديث حالة الزيارة",
+      "assistDentistWorkflow": "مساعدة الطبيب في سير العمل",
+      "viewDailySchedule": "عرض جدول اليوم",
+      "prepareTreatmentRoom": "تحضير غرفة العلاج",
+      "manageStaff": "إدارة الموظفين",
+      "viewOperationalReports": "عرض تقارير التشغيل",
+      "manageClinicSettings": "إدارة إعدادات العيادة",
+      "manageInvoices": "إدارة الفواتير",
+      "recordPayments": "تسجيل المدفوعات",
+      "exportFinancialReports": "تصدير التقارير المالية",
+      "viewAssignedWorkQueue": "عرض قائمة المهام المخصصة"
+    },
+    "workStart": "وقت البداية",
+    "workEnd": "وقت النهاية"
+  },
+  "appointments": {
+    "add": "موعد جديد",
+    "allDentists": "كل الأطباء",
+    "noPatientMatch": "مفيش مرضى مطابقين",
+    "newTitle": "موعد جديد",
+    "editTitle": "تعديل الموعد",
+    "patient": "المريض",
+    "dentist": "الطبيب",
+    "selectPatient": "اختر مريضًا",
+    "selectDentist": "اختر طبيبًا",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "start": "البداية",
+    "end": "النهاية",
+    "status": "الحالة",
+    "reason": "السبب",
+    "cancelAppt": "إلغاء الموعد",
+    "delete": "حذف الموعد",
+    "deleteTitle": "حذف الموعد؟",
+    "deleteDesc": "سيتم حذف هذا الموعد الخاص بـ {{patient}} مع {{dentist}} نهائيًا.",
+    "conflict": "الطبيب عنده موعد بالفعل في الفترة دي.",
+    "endAfterStart": "وقت النهاية لازم يكون بعد البداية.",
+    "saveError": "تعذّر الحفظ. حاول تاني.",
+    "today": "النهاردة",
+    "back": "السابق",
+    "next": "التالي",
+    "month": "شهر",
+    "week": "أسبوع",
+    "day": "يوم",
+    "agenda": "أجندة",
+    "noEvents": "لا توجد مواعيد في هذه الفترة.",
+    "toast": {
+      "created": "تم إنشاء الموعد بنجاح.",
+      "createFailed": "تعذّر إنشاء الموعد.",
+      "updated": "تم تحديث الموعد بنجاح.",
+      "updateFailed": "تعذّر تحديث الموعد.",
+      "deleted": "تم حذف الموعد بنجاح.",
+      "deleteFailed": "تعذّر حذف الموعد."
+    },
+    "search": "ابحث في المواعيد…",
+    "count": "{{count}} موعد",
+    "allStatuses": "كل الحالات",
+    "type": "النوع",
+    "room": "الغرفة / الكرسي",
+    "outcome": "النتيجة",
+    "fee": "التكلفة",
+    "cancellationReason": "سبب الإلغاء",
+    "duration": "المدة",
+    "typeOption": {
+      "consultation": "استشارة",
+      "cleaning": "تنظيف",
+      "follow_up": "متابعة",
+      "emergency": "طارئ",
+      "treatment": "علاج"
+    },
+    "outcomeOption": {
+      "completed_normally": "تمت الزيارة بنجاح",
+      "needs_follow_up": "يحتاج متابعة",
+      "referred": "تمت الإحالة",
+      "treatment_plan_created": "تم إنشاء خطة علاج"
+    }
+  },
+  "gender": {
+    "male": "ذكر",
+    "female": "أنثى",
+    "other": "آخر",
+    "unspecified": "غير محدد"
+  },
+  "patients": {
+    "add": "إضافة مريض",
+    "search": "ابحث في المرضى…",
+    "count": "{{count}} مريض",
+    "empty": "مفيش مرضى بعد",
+    "emptyDesc": "أضف أول مريض للبدء.",
+    "filter": {
+      "all": "الكل"
+    },
+    "newTitle": "مريض جديد",
+    "editTitle": "تعديل المريض",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "gender": "النوع",
+    "dateOfBirth": "تاريخ الميلاد",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "address": "العنوان",
+    "medicalNotes": "ملاحظات طبية",
+    "medicalProfile": "الملف الطبي",
+    "bloodType": "فصيلة الدم",
+    "smoker": "مدخّن",
+    "allergies": "الحساسية",
+    "chronicConditions": "أمراض مزمنة",
+    "medications": "الأدوية الحالية",
+    "emergencyContactSection": "جهة اتصال الطوارئ",
+    "emergencyName": "جهة اتصال الطوارئ",
+    "emergencyPhone": "هاتف الطوارئ",
+    "commaHint": "افصل بفواصل",
+    "primaryDentist": "الطبيب المعالج",
+    "status": "الحالة",
+    "deleteTitle": "حذف المريض؟",
+    "deleteDesc": "هيتم أرشفة {{name}}. تقدر تتراجع بعدين.",
+    "column": {
+      "name": "المريض",
+      "phone": "الهاتف",
+      "primaryDentist": "الطبيب المعالج",
+      "status": "الحالة"
+    },
+    "viewProfile": "عرض الملف",
+    "backToList": "العودة للمرضى",
+    "notFound": "المريض غير موجود",
+    "notFoundDesc": "ربما تم حذف هذا المريض.",
+    "personalInfo": "المعلومات الشخصية",
+    "contactInfo": "معلومات التواصل",
+    "age": "العمر",
+    "ageValue": "{{age}} سنة",
+    "noNotes": "لا توجد ملاحظات طبية",
+    "noAppointments": "لا توجد مواعيد بعد",
+    "tab": {
+      "overview": "نظرة عامة",
+      "appointments": "المواعيد",
+      "notes": "ملاحظات طبية"
+    },
+    "stat": {
+      "nextAppointment": "الموعد الجاي",
+      "lastVisit": "آخر زيارة",
+      "totalVisits": "إجمالي الزيارات"
+    },
+    "toast": {
+      "created": "تم إنشاء المريض بنجاح.",
+      "createFailed": "تعذّر إنشاء المريض.",
+      "updated": "تم تحديث المريض بنجاح.",
+      "updateFailed": "تعذّر تحديث المريض.",
+      "deleted": "تم أرشفة المريض بنجاح.",
+      "deleteFailed": "تعذّرت أرشفة المريض."
+    }
+  },
+  "validation": {
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "fullNameRequired": "الاسم الكامل مطلوب",
+    "nameMin": "يجب أن يتكون الاسم من {{count}} أحرف على الأقل",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "passwordMin": "يجب أن تتكون كلمة المرور من {{count}} أحرف على الأقل",
+    "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+    "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+    "numbersOnly": "أرقام فقط",
+    "otpLength": "يجب أن يتكون الرمز من {{count}} أرقام",
+    "otpDigits": "يجب أن يحتوي الرمز على أرقام فقط",
+    "passwordUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل",
+    "passwordNumber": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
+    "passwordSpecial": "يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل"
+  },
+  "notFound": {
+    "title": "الصفحة غير موجودة",
+    "subtitle": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
+    "backHome": "العودة إلى لوحة التحكم"
+  },
+  "bulk": {
+    "selected": "{{count}} محدد",
+    "total": "{{count}} سجل إجمالي",
+    "import": "استيراد",
+    "exportAll": "تصدير الكل",
+    "exportSelected": "تصدير المحدد",
+    "deleteSelected": "حذف المحدد",
+    "clear": "مسح التحديد",
+    "selectAll": "تحديد الكل",
+    "selectRow": "تحديد الصف",
+    "deleteTitle": "حذف السجلات المحددة؟",
+    "deleteDesc": "سيتم تطبيق هذا الإجراء على {{count}} سجل محدد.",
+    "imported": "اكتمل الاستيراد بنجاح.",
+    "importFailed": "فشل الاستيراد. تحقق من ملف CSV.",
+    "deleted": "تم حذف السجلات المحددة بنجاح.",
+    "export": "تصدير",
+    "selectionHint": "اختر إجراءً للصفوف المحددة",
+    "importTitle": "استيراد بيانات CSV",
+    "importDesc": "ارفع ملف CSV تم تصديره من هذه الصفحة أو يطابق نفس الأعمدة.",
+    "chooseFile": "اختر ملف CSV",
+    "csvOnly": "ملفات CSV فقط"
+  }
+}

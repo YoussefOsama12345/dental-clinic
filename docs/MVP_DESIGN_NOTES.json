@@ -1,0 +1,931 @@
+{
+  "schema": {
+    "enums": [
+      {
+        "name": "user_role",
+        "values": [
+          "owner",
+          "admin",
+          "dentist",
+          "staff"
+        ]
+      },
+      {
+        "name": "branch_status",
+        "values": [
+          "active",
+          "inactive"
+        ]
+      },
+      {
+        "name": "gender",
+        "values": [
+          "male",
+          "female",
+          "other",
+          "unspecified"
+        ]
+      },
+      {
+        "name": "patient_status",
+        "values": [
+          "active",
+          "inactive",
+          "archived"
+        ]
+      },
+      {
+        "name": "staff_role",
+        "values": [
+          "reception",
+          "nurse",
+          "assistant",
+          "manager",
+          "accountant",
+          "other"
+        ]
+      },
+      {
+        "name": "employment_status",
+        "values": [
+          "active",
+          "on_leave",
+          "inactive"
+        ]
+      },
+      {
+        "name": "appointment_status",
+        "values": [
+          "scheduled",
+          "confirmed",
+          "checked_in",
+          "in_progress",
+          "completed",
+          "cancelled",
+          "no_show"
+        ]
+      }
+    ],
+    "tables": [
+      {
+        "name": "clinics",
+        "purpose": "Top tenant root. One organization/account. Owns branches and is the membership boundary. Created on onboarding by the signing-up owner.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "slug",
+            "type": "text",
+            "constraints": "UNIQUE (nullable until set)",
+            "notes": "optional URL/subdomain handle"
+          },
+          {
+            "name": "owner_user_id",
+            "type": "uuid",
+            "constraints": "NOT NULL",
+            "notes": "Supabase auth.users.id of the creating owner. No DB FK (cross-schema); enforced in app + via profiles."
+          },
+          {
+            "name": "timezone",
+            "type": "text",
+            "constraints": "NOT NULL default 'Asia/Riyadh'",
+            "notes": "used to interpret/display appointment times"
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "one clinic has many branches",
+          "one clinic has many profiles (members)"
+        ],
+        "indexes": [
+          "unique(slug)"
+        ]
+      },
+      {
+        "name": "branches",
+        "purpose": "Physical locations under a clinic. The tenancy scope unit: every domain row carries branch_id and queries filter on it. Backs the branch switcher + BranchesPage.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "city",
+            "type": "text"
+          },
+          {
+            "name": "address",
+            "type": "text"
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "is_main",
+            "type": "boolean",
+            "constraints": "NOT NULL default false",
+            "notes": "the clinic's primary branch (mirrors mock isMain)"
+          },
+          {
+            "name": "status",
+            "type": "branch_status",
+            "constraints": "NOT NULL default 'active'"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "belongs to clinic",
+          "has many patients/dentists/staff/appointments",
+          "referenced by profiles.default_branch_id"
+        ],
+        "indexes": [
+          "index(clinic_id)",
+          "unique partial index (clinic_id) WHERE is_main = true — at most one main branch per clinic"
+        ]
+      },
+      {
+        "name": "profiles",
+        "purpose": "Bridge between Supabase auth.users and the app domain. One row per authenticated app user. Holds clinic membership + app role + active/default branch. This is how login maps to a tenant.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK",
+            "notes": "EQUALS auth.users.id (Supabase user id). Not gen_random_uuid — set from JWT sub on first login/upsert."
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE",
+            "notes": "the tenant this user belongs to"
+          },
+          {
+            "name": "email",
+            "type": "text",
+            "constraints": "NOT NULL",
+            "notes": "denormalized from auth for display/search"
+          },
+          {
+            "name": "full_name",
+            "type": "text"
+          },
+          {
+            "name": "role",
+            "type": "user_role",
+            "constraints": "NOT NULL default 'staff'",
+            "notes": "app-level RBAC, distinct from staff_role; owner/admin/dentist/staff"
+          },
+          {
+            "name": "default_branch_id",
+            "type": "uuid",
+            "constraints": "REFERENCES branches(id) ON DELETE SET NULL",
+            "notes": "initial active branch for the switcher"
+          },
+          {
+            "name": "dentist_id",
+            "type": "uuid",
+            "constraints": "REFERENCES dentists(id) ON DELETE SET NULL",
+            "notes": "optional link if this login is a clinical provider, so a dentist can see their own calendar"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "id mirrors auth.users.id (logical FK, cross-schema)",
+          "belongs to clinic",
+          "optionally links to one dentist"
+        ],
+        "indexes": [
+          "index(clinic_id)",
+          "index(email)"
+        ]
+      },
+      {
+        "name": "patients",
+        "purpose": "Clinical patient records, scoped to a branch. References a primary-provider dentist. Backs PatientsPage and Overview counts.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE",
+            "notes": "denormalized tenant root for cross-branch reporting"
+          },
+          {
+            "name": "branch_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES branches(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "first_name",
+            "type": "text",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "last_name",
+            "type": "text",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "gender",
+            "type": "gender",
+            "constraints": "NOT NULL default 'unspecified'"
+          },
+          {
+            "name": "date_of_birth",
+            "type": "date",
+            "notes": "date (no tz) — birthdays are calendar dates"
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "email",
+            "type": "text"
+          },
+          {
+            "name": "address",
+            "type": "text"
+          },
+          {
+            "name": "medical_notes",
+            "type": "text",
+            "notes": "free-text allergies/conditions summary for MVP"
+          },
+          {
+            "name": "primary_dentist_id",
+            "type": "uuid",
+            "constraints": "REFERENCES dentists(id) ON DELETE SET NULL",
+            "notes": "primary provider — a dentist, NOT a staff row"
+          },
+          {
+            "name": "status",
+            "type": "patient_status",
+            "constraints": "NOT NULL default 'active'"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "belongs to branch (and clinic)",
+          "references primary dentist",
+          "has many appointments",
+          "has many visit_notes"
+        ],
+        "indexes": [
+          "index(branch_id)",
+          "index(branch_id, last_name, first_name) for roster sorting",
+          "index(primary_dentist_id)",
+          "index(branch_id, phone) for lookup"
+        ]
+      },
+      {
+        "name": "dentists",
+        "purpose": "Standalone clinical providers (doctors). Separate entity from staff. Powers /dentists page; patients + appointments reference it. The /staff combined roster reads Doctor rows from here.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "branch_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES branches(id) ON DELETE CASCADE",
+            "notes": "primary branch assignment for MVP (single-branch per dentist)"
+          },
+          {
+            "name": "full_name",
+            "type": "text",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "specialty",
+            "type": "text",
+            "notes": "e.g. Orthodontics, Endodontics (free text for MVP)"
+          },
+          {
+            "name": "license_number",
+            "type": "text",
+            "notes": "professional license / registration no."
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "email",
+            "type": "text"
+          },
+          {
+            "name": "color",
+            "type": "text",
+            "notes": "hex color for calendar event coloring per provider"
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "constraints": "NOT NULL default true"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "belongs to branch (and clinic)",
+          "has many patients (as primary provider)",
+          "has many appointments",
+          "optionally linked from a profile (login)"
+        ],
+        "indexes": [
+          "index(branch_id)",
+          "index(branch_id, is_active)"
+        ]
+      },
+      {
+        "name": "staff",
+        "purpose": "Non-provider personnel (reception, nurse, etc.) with a role enum. Separate from dentists. Powers /staff page; combined roster unions these rows with dentists under role=Doctor.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "branch_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES branches(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "full_name",
+            "type": "text",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "role",
+            "type": "staff_role",
+            "constraints": "NOT NULL default 'reception'",
+            "notes": "reception/nurse/assistant/manager/... — drives the role filter"
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "email",
+            "type": "text"
+          },
+          {
+            "name": "profile_id",
+            "type": "uuid",
+            "constraints": "REFERENCES profiles(id) ON DELETE SET NULL",
+            "notes": "optional link if this staffer has a login"
+          },
+          {
+            "name": "status",
+            "type": "employment_status",
+            "constraints": "NOT NULL default 'active'"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "belongs to branch (and clinic)",
+          "optionally links to a profile/login"
+        ],
+        "indexes": [
+          "index(branch_id)",
+          "index(branch_id, role)"
+        ]
+      },
+      {
+        "name": "appointments",
+        "purpose": "Calendar events: a patient with a dentist in a time range at a branch. Drives the full calendar grid, click-to-create/edit, and conflict detection.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "branch_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES branches(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "patient_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES patients(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "dentist_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES dentists(id) ON DELETE RESTRICT",
+            "notes": "the provider — a dentist, NOT staff. RESTRICT so you can't delete a dentist with appointments."
+          },
+          {
+            "name": "starts_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL"
+          },
+          {
+            "name": "ends_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL",
+            "notes": "CHECK (ends_at > starts_at)"
+          },
+          {
+            "name": "status",
+            "type": "appointment_status",
+            "constraints": "NOT NULL default 'scheduled'"
+          },
+          {
+            "name": "reason",
+            "type": "text",
+            "notes": "chief complaint / visit type label"
+          },
+          {
+            "name": "notes",
+            "type": "text"
+          },
+          {
+            "name": "created_by",
+            "type": "uuid",
+            "constraints": "REFERENCES profiles(id) ON DELETE SET NULL",
+            "notes": "who booked it"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "belongs to branch (and clinic)",
+          "references patient",
+          "references dentist",
+          "optionally created_by a profile",
+          "has many visit_notes (optional)"
+        ],
+        "indexes": [
+          "index(branch_id, starts_at) — month/week/day grid range scans per branch",
+          "index(dentist_id, starts_at, ends_at) — per-provider conflict detection",
+          "index(patient_id) — patient history",
+          "CHECK constraint ends_at > starts_at",
+          "OPTIONAL HARD GUARANTEE: EXCLUDE USING gist (dentist_id WITH =, tstzrange(starts_at, ends_at) WITH &&) WHERE status NOT IN ('cancelled','no_show') — prevents double-booking at the DB level (requires btree_gist extension; raw SQL in migration)"
+        ]
+      },
+      {
+        "name": "visit_notes",
+        "purpose": "OPTIONAL (lightweight, mark clearly): a per-visit clinical/treatment note tied to a patient (and optionally an appointment). Minimal stand-in until the deferred charting/treatments modules land. Include only if visit logging is in MVP scope; otherwise omit.",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "constraints": "PK default gen_random_uuid()"
+          },
+          {
+            "name": "clinic_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES clinics(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "branch_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES branches(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "patient_id",
+            "type": "uuid",
+            "constraints": "NOT NULL REFERENCES patients(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "appointment_id",
+            "type": "uuid",
+            "constraints": "REFERENCES appointments(id) ON DELETE SET NULL",
+            "notes": "optional link to the visit's appointment"
+          },
+          {
+            "name": "dentist_id",
+            "type": "uuid",
+            "constraints": "REFERENCES dentists(id) ON DELETE SET NULL",
+            "notes": "authoring provider"
+          },
+          {
+            "name": "note",
+            "type": "text",
+            "constraints": "NOT NULL",
+            "notes": "free-text treatment/clinical note for MVP"
+          },
+          {
+            "name": "visit_date",
+            "type": "date",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz",
+            "constraints": "NOT NULL default now()"
+          }
+        ],
+        "relations": [
+          "belongs to branch (and clinic)",
+          "references patient",
+          "optionally references appointment + dentist"
+        ],
+        "indexes": [
+          "index(patient_id, visit_date desc)",
+          "index(branch_id)"
+        ]
+      }
+    ],
+    "drizzleSnippet": "// apps/backend/src/modules/core/schema/core.schema.ts\n// (drizzle.config.ts glob: ./src/modules/**/schema/*.ts — put this under any module/schema)\nimport {\n  pgTable, pgEnum, uuid, text, boolean, date, timestamp,\n  index, uniqueIndex, check,\n} from 'drizzle-orm/pg-core'\nimport { sql } from 'drizzle-orm'\n\n// ─── Enums ──────────────────────────────────────────────────────────────────\nexport const userRole = pgEnum('user_role', ['owner', 'admin', 'dentist', 'staff'])\nexport const branchStatus = pgEnum('branch_status', ['active', 'inactive'])\nexport const gender = pgEnum('gender', ['male', 'female', 'other', 'unspecified'])\nexport const patientStatus = pgEnum('patient_status', ['active', 'inactive', 'archived'])\nexport const staffRole = pgEnum('staff_role', ['reception', 'nurse', 'assistant', 'manager', 'accountant', 'other'])\nexport const employmentStatus = pgEnum('employment_status', ['active', 'on_leave', 'inactive'])\nexport const appointmentStatus = pgEnum('appointment_status', ['scheduled', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show'])\n\n// Shared column helpers\nconst id = () => uuid('id').primaryKey().defaultRandom()\nconst createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()\nconst updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()\n\n// ─── clinics (tenant root) ──────────────────────────────────────────────────\nexport const clinics = pgTable('clinics', {\n  id: id(),\n  name: text('name').notNull(),\n  slug: text('slug'),\n  // Supabase auth.users.id — logical FK only (cross-schema), enforced in app layer.\n  ownerUserId: uuid('owner_user_id').notNull(),\n  timezone: text('timezone').notNull().default('Asia/Riyadh'),\n  phone: text('phone'),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [uniqueIndex('clinics_slug_uq').on(t.slug)])\n\n// ─── branches (tenancy scope unit) ──────────────────────────────────────────\nexport const branches = pgTable('branches', {\n  id: id(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  name: text('name').notNull(),\n  city: text('city'),\n  address: text('address'),\n  phone: text('phone'),\n  isMain: boolean('is_main').notNull().default(false),\n  status: branchStatus('status').notNull().default('active'),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  index('branches_clinic_idx').on(t.clinicId),\n  // at most one main branch per clinic\n  uniqueIndex('branches_one_main_uq').on(t.clinicId).where(sql`${t.isMain} = true`),\n])\n\n// ─── profiles (auth.users <-> app domain bridge) ────────────────────────────\nexport const profiles = pgTable('profiles', {\n  // id === auth.users.id (set from JWT sub on upsert), NOT defaultRandom()\n  id: uuid('id').primaryKey(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  email: text('email').notNull(),\n  fullName: text('full_name'),\n  role: userRole('role').notNull().default('staff'),\n  defaultBranchId: uuid('default_branch_id').references(() => branches.id, { onDelete: 'set null' }),\n  dentistId: uuid('dentist_id').references((): any => dentists.id, { onDelete: 'set null' }),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  index('profiles_clinic_idx').on(t.clinicId),\n  index('profiles_email_idx').on(t.email),\n])\n\n// ─── dentists (clinical providers — separate from staff) ────────────────────\nexport const dentists = pgTable('dentists', {\n  id: id(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),\n  fullName: text('full_name').notNull(),\n  specialty: text('specialty'),\n  licenseNumber: text('license_number'),\n  phone: text('phone'),\n  email: text('email'),\n  color: text('color'),\n  isActive: boolean('is_active').notNull().default(true),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  index('dentists_branch_idx').on(t.branchId),\n  index('dentists_branch_active_idx').on(t.branchId, t.isActive),\n])\n\n// ─── staff (non-provider personnel — separate from dentists) ────────────────\nexport const staff = pgTable('staff', {\n  id: id(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),\n  fullName: text('full_name').notNull(),\n  role: staffRole('role').notNull().default('reception'),\n  phone: text('phone'),\n  email: text('email'),\n  profileId: uuid('profile_id').references(() => profiles.id, { onDelete: 'set null' }),\n  status: employmentStatus('status').notNull().default('active'),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  index('staff_branch_idx').on(t.branchId),\n  index('staff_branch_role_idx').on(t.branchId, t.role),\n])\n\n// ─── patients ───────────────────────────────────────────────────────────────\nexport const patients = pgTable('patients', {\n  id: id(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),\n  firstName: text('first_name').notNull(),\n  lastName: text('last_name').notNull(),\n  gender: gender('gender').notNull().default('unspecified'),\n  dateOfBirth: date('date_of_birth'),\n  phone: text('phone'),\n  email: text('email'),\n  address: text('address'),\n  medicalNotes: text('medical_notes'),\n  primaryDentistId: uuid('primary_dentist_id').references(() => dentists.id, { onDelete: 'set null' }),\n  status: patientStatus('status').notNull().default('active'),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  index('patients_branch_idx').on(t.branchId),\n  index('patients_branch_name_idx').on(t.branchId, t.lastName, t.firstName),\n  index('patients_primary_dentist_idx').on(t.primaryDentistId),\n])\n\n// ─── appointments (calendar) ────────────────────────────────────────────────\nexport const appointments = pgTable('appointments', {\n  id: id(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),\n  patientId: uuid('patient_id').notNull().references(() => patients.id, { onDelete: 'cascade' }),\n  // provider is a DENTIST, not staff; RESTRICT to protect booked providers\n  dentistId: uuid('dentist_id').notNull().references(() => dentists.id, { onDelete: 'restrict' }),\n  startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),\n  endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),\n  status: appointmentStatus('status').notNull().default('scheduled'),\n  reason: text('reason'),\n  notes: text('notes'),\n  createdBy: uuid('created_by').references(() => profiles.id, { onDelete: 'set null' }),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  // month/week/day grid range scans, scoped to active branch\n  index('appointments_branch_start_idx').on(t.branchId, t.startsAt),\n  // per-provider conflict detection\n  index('appointments_dentist_time_idx').on(t.dentistId, t.startsAt, t.endsAt),\n  index('appointments_patient_idx').on(t.patientId),\n  check('appointments_time_chk', sql`${t.endsAt} > ${t.startsAt}`),\n  // NOTE: a hard double-booking guard via an EXCLUDE/gist constraint can't be\n  // expressed in Drizzle's table builder — add it as raw SQL in the migration:\n  //   ALTER TABLE appointments ADD CONSTRAINT appointments_no_overlap\n  //   EXCLUDE USING gist (dentist_id WITH =, tstzrange(starts_at, ends_at) WITH &&)\n  //   WHERE (status NOT IN ('cancelled','no_show'));   -- needs btree_gist\n])\n\n// ─── visit_notes (OPTIONAL — lightweight treatment note) ────────────────────\nexport const visitNotes = pgTable('visit_notes', {\n  id: id(),\n  clinicId: uuid('clinic_id').notNull().references(() => clinics.id, { onDelete: 'cascade' }),\n  branchId: uuid('branch_id').notNull().references(() => branches.id, { onDelete: 'cascade' }),\n  patientId: uuid('patient_id').notNull().references(() => patients.id, { onDelete: 'cascade' }),\n  appointmentId: uuid('appointment_id').references(() => appointments.id, { onDelete: 'set null' }),\n  dentistId: uuid('dentist_id').references(() => dentists.id, { onDelete: 'set null' }),\n  note: text('note').notNull(),\n  visitDate: date('visit_date').notNull().defaultNow(),\n  createdAt: createdAt(),\n  updatedAt: updatedAt(),\n}, (t) => [\n  index('visit_notes_patient_date_idx').on(t.patientId, t.visitDate),\n  index('visit_notes_branch_idx').on(t.branchId),\n])",
+    "supabaseAuthIntegration": "Auth users live in Supabase's auth.users (managed by GoTrue, in the `auth` schema). Domain tables live in the `public` schema via Drizzle/DATABASE_URL. The link is a `profiles` table whose PRIMARY KEY equals auth.users.id (the JWT `sub`). Crucial detail: profiles.id is plain `uuid('id').primaryKey()` WITHOUT defaultRandom() — you set it from the verified JWT subject, never auto-generate it. Do NOT add a Drizzle/FK reference from public tables to auth.users: it's a different schema Drizzle doesn't manage, and migrations would try to recreate it. Treat auth.users.id (and clinics.owner_user_id) as logical/cross-schema FKs enforced in the app layer (optionally a real ALTER TABLE ... REFERENCES auth.users(id) added by hand in a migration if you want DB-level integrity).\\n\\nFlow: (1) Frontend signs up/in with @supabase/supabase-js -> gets a JWT. (2) Fastify @fastify/jwt middleware verifies it with JWT_SECRET (HS256 Supabase legacy secret) or Supabase JWKS, yielding `sub` (= user id), email. (3) On first authenticated request (or an onboarding endpoint), upsert a `profiles` row keyed by sub. (4) The clinic created during onboarding sets clinics.owner_user_id = sub and the owner's profile.role = 'owner'. profiles.clinic_id ties every login to exactly one tenant (single-clinic membership for MVP — extend to a clinic_members join table later for multi-clinic users).\\n\\nTenancy resolution: middleware loads the caller's profile -> clinic_id + role. The active branch comes from the X-Branch-Id header (frontend active-branch context / switcher), validated to belong to the caller's clinic, then injected into every query's WHERE branch_id = $active. profiles.default_branch_id seeds the initial active branch. Two role systems coexist deliberately: profiles.role (user_role: owner/admin/dentist/staff) is app RBAC for what a *login* can do; staff.role (staff_role) and the dentists table are *directory* records of personnel (which may or may not have logins). A dentist who needs to log in gets a profile with role='dentist' and profiles.dentist_id pointing at their dentists row, so they can see their own calendar.\\n\\nRLS note: because the API always goes through the service-role connection (DATABASE_URL) and enforces clinic_id/branch_id scoping in app code, Postgres RLS is optional for the MVP. If you later expose Supabase directly to the client, add RLS policies on every public table using auth.uid() -> profiles.clinic_id.",
+    "migrationsPlan": "Generate, don't hand-write the bulk: with drizzle.config.ts already set (dialect postgresql, schema ./src/modules/**/schema/*.ts, out ./drizzle), place the schema file under a module e.g. apps/backend/src/modules/core/schema/core.schema.ts (or split per-feature: patients/schema/patients.schema.ts etc. — the glob picks them all up; keep cross-referenced tables importable).\\n\\nSteps:\\n1. Add a tiny DB client first: apps/backend/src/db/client.ts -> `import postgres from 'postgres'; import { drizzle } from 'drizzle-orm/postgres-js'; const client = postgres(process.env.DATABASE_URL!, { prepare: false }); export const db = drizzle(client, { schema })`. (prepare:false is recommended for Supabase's transaction-pooler / pgbouncer on port 6543; use the direct 5432 URL for migrations.)\\n2. `bunx drizzle-kit generate` -> emits ./drizzle/0000_*.sql with the enums, tables, FKs, and the partial/unique/btree indexes + the appointments time CHECK.\\n3. Hand-edit that generated SQL (or add a follow-up ./drizzle/0001_appointments_no_overlap.sql) to prepend `CREATE EXTENSION IF NOT EXISTS btree_gist;` and append the EXCLUDE constraint on appointments for DB-level double-booking prevention (Drizzle can't express EXCLUDE). gen_random_uuid() needs pgcrypto, which is built into Supabase Postgres — no extension step required.\\n4. Apply with `bunx drizzle-kit migrate` (run against the DIRECT connection, not the pooler). Optionally `drizzle-kit push` for fast local iteration before committing real migrations.\\n5. Seed: create one clinic + a main branch + the owner profile during onboarding code rather than in SQL, so owner_user_id matches a real Supabase user.\\n\\nDependency/creation order (FKs): clinics -> branches -> dentists -> profiles (refs branches + dentists) -> staff (refs profiles) -> patients (refs dentists) -> appointments (refs patients, dentists, profiles) -> visit_notes. Note profiles<->dentists is a soft cycle (profiles.dentist_id and dentists has no back-FK, so it's fine; the `(): any =>` forward ref in the snippet handles ordering). drizzle-kit orders DDL correctly; just keep all tables in files the glob matches.",
+    "notes": "SCOPE: Matches the locked decisions exactly — separate dentists vs staff (appointments.dentist_id and patients.primary_dentist_id both point at dentists, never staff), branch_id on every domain table, Supabase auth via a profiles bridge keyed to auth.users.id, and appointment indexes tuned for the full calendar grid + conflict detection.\\n\\nKEY DESIGN CHOICES:\\n- Both clinic_id AND branch_id on leaf tables (patients/dentists/staff/appointments/visit_notes). branch_id is the query scope; clinic_id is denormalized so Overview cross-branch counts and the branch switcher's 'all branches' view don't need a join through branches. Always filter by branch_id (or clinic_id for clinic-wide rollups).\\n- Combined /staff roster: the page UNIONs `SELECT ..., 'doctor' AS role FROM dentists WHERE branch_id=$b` with `SELECT ..., role FROM staff WHERE branch_id=$b`; Doctor rows deep-link to /dentists/:id for edit. No shared table needed — the separation is honored in storage, the roster is a read-time union. (Consider a Postgres VIEW `branch_roster` to encapsulate it.)\\n- Appointment conflict detection: app-level via the appointments_dentist_time_idx index (`WHERE dentist_id=$d AND starts_at < $newEnd AND ends_at > $newStart AND status NOT IN ('cancelled','no_show')`); plus the OPTIONAL gist EXCLUDE constraint as a race-proof DB backstop. Use whichever fits — the index alone is enough for MVP UX.\\n- ON DELETE policy: cascade from clinic/branch down (delete a branch -> its patients/appts go); SET NULL for soft links (primary_dentist_id, created_by, profile_id, default_branch_id); RESTRICT on appointments.dentist_id so a provider with bookings can't be hard-deleted (deactivate via dentists.is_active instead).\\n- visit_notes is explicitly OPTIONAL — include only if MVP logs visits; the real charting/treatments/prescriptions modules are deferred per the brief and would supersede it.\\n\\nTYPES: uuid PKs default gen_random_uuid() (Supabase-native pgcrypto); timestamptz for all instants (starts_at/ends_at/created_at); `date` (no tz) for date_of_birth and visit_date; pgEnum for every status/role/gender. timestamp({ withTimezone: true }) is Drizzle's timestamptz.\\n\\nFOLLOW-ONS (not schema, but implied glue): add db/client.ts (postgres-js + prepare:false for the Supabase pooler), wire the auth middleware to verify the JWT and upsert/load the profile, and inject branch_id from an X-Branch-Id header validated against the caller's clinic. Frontend: axios client reading VITE_API_URL, attaching the Supabase access token + active branch id; react-query keys should include branchId so switching branches refetches. VITE_API_URL is not yet in the frontend env — add it.\\n\\nFILES INSPECTED: apps/backend/drizzle.config.ts (schema glob ./src/modules/**/schema/*.ts, out ./drizzle, postgresql), apps/backend/.env.example (DATABASE_URL/SUPABASE_*/JWT_SECRET present), apps/backend/package.json (drizzle-orm ^0.43, postgres ^3.4.5, @fastify/jwt, @supabase/supabase-js, zod), apps/dashboard/src/features/branches/pages/BranchesPage.tsx (mock fields: name/city/address/phone/manager/status/isMain/staffCount -> mirrored into branches + the is_main partial-unique index). Patients/Dentists/Staff/Appointments pages are still i18n stub components, so field names follow the brief + branches mock conventions."
+  },
+  "backend": {
+    "moduleStructure": "Follow the convention ALREADY scaffolded in the repo (modules/auth/{controller,repository,routes,schema,services,types,validation} are 0-byte stubs). Replicate this 7-folder layout per entity: patients, dentists, staff, appointments, branches (and keep auth for /me). Per module files (use the @/* alias and .ts extensions since tsconfig has allowImportingTsExtensions + paths @/*->src/*):\n\n- schema/<entity>.schema.ts -> Drizzle pgTable definitions (drizzle.config.ts globs src/modules/**/schema/*.ts, so this is the ONLY place tables may live). Co-locate cross-entity tables: a shared schema/_enums.ts is fine but each table file must sit under some modules/*/schema/.\n- validation/<entity>.validation.ts -> zod schemas (createX, updateX, listXQuery, params). Infer types from these.\n- types/<entity>.types.ts -> z.infer<> DTOs + Drizzle $inferSelect/$inferInsert row types.\n- repository/<entity>.repository.ts -> ONLY data access. Every function takes branchId as an explicit first/scoping arg and adds eq(table.branchId, branchId) to WHERE on select/update/delete and sets branchId on insert. No HTTP knowledge.\n- services/<entity>.service.ts -> business rules (conflict detection, 'doctor came from dentists table' combined-roster logic, uniqueness checks). Calls repository, throws typed AppError (NotFound/Conflict/Forbidden).\n- controller/<entity>.controller.ts -> thin Fastify handlers: read req.user + req.branchId (set by middleware), parse req.body/query/params with the module's zod schema, call service, reply.\n- routes/<entity>.routes.ts -> a Fastify plugin: `export default async function patientRoutes(app: FastifyInstance){ app.addHook('preHandler', app.authenticate); app.addHook('preHandler', app.resolveBranch); app.get('/', patientController.list); ... }`. Register zod via a typed-provider OR validate manually in controller (see validation field).\n\nRegistration in app.ts: create src/modules/index.ts (or inline) and, after the existing cors/helmet registers and BEFORE export, do `await app.register(patientRoutes,{prefix:'/api/patients'})`, dentists '/api/dentists', staff '/api/staff', appointments '/api/appointments', branches '/api/branches', auth '/api/me' (or a small meRoutes). Register the JWT plugin + auth/branch decorators and the error handler/404 first. Keep app.ts as the single composition root; server.ts stays untouched (it already does app.listen with top-level await support).",
+    "dbClient": "Create src/db/client.ts as a single shared singleton (Bun caches the module, so importing it everywhere reuses one pool):\n\n```ts\nimport { drizzle } from 'drizzle-orm/postgres-js'\nimport postgres from 'postgres'\nimport * as patients from '@/modules/patients/schema/patients.schema.ts'\nimport * as dentists from '@/modules/dentists/schema/dentists.schema.ts'\nimport * as staff from '@/modules/staff/schema/staff.schema.ts'\nimport * as appointments from '@/modules/appointments/schema/appointments.schema.ts'\nimport * as branches from '@/modules/branches/schema/branches.schema.ts'\n\nconst connectionString = process.env.DATABASE_URL!\n// Supabase pooler: use prepare:false when on the transaction pooler (pgBouncer); 1 long-lived pool.\nexport const sql = postgres(connectionString, { max: 10, prepare: false })\nexport const schema = { ...patients, ...dentists, ...staff, ...appointments, ...branches }\nexport const db = drizzle(sql, { schema })\nexport type DB = typeof db\n```\n\nRepositories/services `import { db, schema } from '@/db/client.ts'`. Do NOT instantiate per-request. Optionally decorate `app.decorate('db', db)` so handlers can use `app.db`, but the singleton import is simpler and is what drizzle-kit migrate also drives via drizzle.config.ts. Separately create src/lib/supabase.ts exporting a service-role client `createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)` ONLY for admin operations (e.g. reading auth.users metadata) — never expose service role to request flow beyond verification.",
+    "authMiddleware": "Two-part: JWT verification decorator + branch-resolution decorator, both registered in app.ts before routes. Fill the empty src/middleware/auth.middleware.ts.\n\nJWT verification (Supabase HS256 access tokens are signed with the project JWT secret = env JWT_SECRET):\n- Register @fastify/jwt: `app.register(fastifyJwt, { secret: process.env.JWT_SECRET! })`. Supabase signs access tokens HS256 with this secret, so symmetric verify works without JWKS. (If the project later moves to RS256/asymmetric keys, swap to JWKS via @fastify/jwt's `secret` async resolver or jose remoteJWKSet against SUPABASE_URL/auth/v1/.well-known/jwks.json — design leaves this as a single swap point in one file.)\n- `app.decorate('authenticate', async (req, reply) => { try { await req.jwtVerify() } catch { throw new UnauthorizedError() } })`. After verify, req.user holds the decoded claims. Normalize into req.authUser = { id: payload.sub, email: payload.email, role: payload.role, appMeta: payload.app_metadata }. Reject if payload.aud !== 'authenticated' or exp passed (jwtVerify handles exp).\n\nBranch scoping (defense in depth — NEVER trust a client-sent branch_id blindly): the set of branches a user may touch must come from the SERVER, not the request body.\n- Source of truth: a membership table `branch_members (user_id uuid -> auth.users.id, branch_id uuid, role)` (or store allowed branch_ids in the Supabase JWT app_metadata at signup). \n- `app.decorate('resolveBranch', async (req) => { const requested = req.headers['x-branch-id'] ?? req.query.branchId; const allowed = await loadUserBranchIds(req.authUser.id); if requested: assert allowed.includes(requested) else throw ForbiddenError; req.branchId = requested ?? allowed[0]; })`. The active branch comes from the X-Branch-Id header (the frontend already has an active-branch context/switcher to send it).\n- Enforcement is layered: (1) middleware proves the user is a member of req.branchId; (2) EVERY repository function still injects `eq(table.branchId, req.branchId)` into the query — so even a controller bug can't read another branch's rows; (3) on insert the repo overwrites any body.branchId with req.branchId. Client-supplied branch_id in bodies is always ignored.\n- Routes apply both as preHandler hooks: `app.addHook('preHandler', app.authenticate); app.addHook('preHandler', app.resolveBranch)`. /api/me runs authenticate only (no branch yet). /health stays public.\n- Add fastify type augmentation (src/types/fastify.d.ts) declaring authenticate, resolveBranch decorators and req.authUser / req.branchId.",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "purpose": "Liveness probe (already exists)",
+        "auth": false,
+        "notes": "Public, no branch scope."
+      },
+      {
+        "method": "GET",
+        "path": "/api/me",
+        "purpose": "Return the authed user profile + their branch memberships (drives branch switcher)",
+        "auth": true,
+        "notes": "authenticate only, NO resolveBranch. Returns {user, branches:[{id,name,clinicId,role}]}. Frontend useAuthStore + active-branch context hydrate from this."
+      },
+      {
+        "method": "GET",
+        "path": "/api/branches",
+        "purpose": "List branches the user may access within their clinic",
+        "auth": true,
+        "notes": "Scoped to the user's membership set, NOT to active branch. Powers the header switcher + mock branches feature."
+      },
+      {
+        "method": "GET",
+        "path": "/api/branches/:id",
+        "purpose": "Get one branch",
+        "auth": true,
+        "notes": "Must be in membership set."
+      },
+      {
+        "method": "GET",
+        "path": "/api/overview/stats",
+        "purpose": "Overview counts (patients, dentists, today's appointments, staff) for active branch",
+        "auth": true,
+        "notes": "Simple COUNT(*) per table scoped by branchId; single endpoint for the Overview page."
+      },
+      {
+        "method": "GET",
+        "path": "/api/patients",
+        "purpose": "List/search/paginate patients in active branch",
+        "auth": true,
+        "notes": "Query: search, page, pageSize, dentistId(primary provider filter), status. Always WHERE branch_id=req.branchId."
+      },
+      {
+        "method": "POST",
+        "path": "/api/patients",
+        "purpose": "Create patient",
+        "auth": true,
+        "notes": "zod createPatient; primaryDentistId FK validated to exist in same branch's dentists table; branchId forced server-side."
+      },
+      {
+        "method": "GET",
+        "path": "/api/patients/:id",
+        "purpose": "Get one patient",
+        "auth": true,
+        "notes": "404 if not in active branch."
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/patients/:id",
+        "purpose": "Update patient",
+        "auth": true,
+        "notes": "zod updatePatient (partial); branchId immutable."
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/patients/:id",
+        "purpose": "Delete/soft-delete patient",
+        "auth": true,
+        "notes": "Prefer soft delete (status=archived) to preserve appointment history."
+      },
+      {
+        "method": "GET",
+        "path": "/api/dentists",
+        "purpose": "List clinical providers (powers /dentists page AND the Doctor rows of the combined /staff roster)",
+        "auth": true,
+        "notes": "Separate table from staff. Query: search, specialty, active. Branch scoped."
+      },
+      {
+        "method": "POST",
+        "path": "/api/dentists",
+        "purpose": "Create dentist (name, specialty, license, contact)",
+        "auth": true,
+        "notes": "zod createDentist; branchId forced."
+      },
+      {
+        "method": "GET",
+        "path": "/api/dentists/:id",
+        "purpose": "Get one dentist",
+        "auth": true,
+        "notes": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/dentists/:id",
+        "purpose": "Update dentist",
+        "auth": true,
+        "notes": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/dentists/:id",
+        "purpose": "Deactivate dentist",
+        "auth": true,
+        "notes": "Block hard-delete if patients reference them as primary provider or future appointments exist; set active=false instead."
+      },
+      {
+        "method": "GET",
+        "path": "/api/staff",
+        "purpose": "List non-clinical staff (reception, nurse, ...) in active branch",
+        "auth": true,
+        "notes": "Separate staff table with role enum. Query: search, role, active. Branch scoped."
+      },
+      {
+        "method": "POST",
+        "path": "/api/staff",
+        "purpose": "Create staff member",
+        "auth": true,
+        "notes": "zod createStaff with role enum; branchId forced."
+      },
+      {
+        "method": "GET",
+        "path": "/api/staff/:id",
+        "purpose": "Get one staff member",
+        "auth": true,
+        "notes": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/staff/:id",
+        "purpose": "Update staff member",
+        "auth": true,
+        "notes": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/staff/:id",
+        "purpose": "Deactivate staff member",
+        "auth": true,
+        "notes": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/staff/roster",
+        "purpose": "Combined roster: dentists (as role=Doctor) UNION staff, filterable by role",
+        "auth": true,
+        "notes": "Service-layer merge: rows from dentists table tagged kind:'dentist' (link to /dentists for edit) + rows from staff table tagged kind:'staff'. Query: role=Doctor|Reception|Nurse|all, search. The two remain stored separately — this is a read-only projection for the /staff page filter."
+      },
+      {
+        "method": "GET",
+        "path": "/api/appointments",
+        "purpose": "List appointments for the calendar grid within a date range",
+        "auth": true,
+        "notes": "Query REQUIRED: from, to (ISO) for month/week/day window; optional dentistId, status. Returns events with dentistId, patientId, start, end, status, title. Branch scoped."
+      },
+      {
+        "method": "POST",
+        "path": "/api/appointments",
+        "purpose": "Create appointment (click-slot-to-create)",
+        "auth": true,
+        "notes": "zod createAppointment (dentistId, patientId, start, end, reason). Service runs conflict detection before insert; 409 on overlap. branchId forced; dentistId/patientId validated in same branch."
+      },
+      {
+        "method": "GET",
+        "path": "/api/appointments/:id",
+        "purpose": "Get one appointment (click-event-to-edit)",
+        "auth": true,
+        "notes": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/appointments/:id",
+        "purpose": "Update/reschedule/cancel appointment (drag-resize, status change)",
+        "auth": true,
+        "notes": "zod updateAppointment; re-run conflict detection excluding self on time change; 409 on overlap."
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/appointments/:id",
+        "purpose": "Delete/cancel appointment",
+        "auth": true,
+        "notes": "Soft-cancel (status=cancelled) preferred for history."
+      },
+      {
+        "method": "GET",
+        "path": "/api/appointments/availability",
+        "purpose": "Conflict-check / free-slot query for a dentist on a date range",
+        "auth": true,
+        "notes": "Query: dentistId, from, to, durationMinutes?, excludeAppointmentId?. Returns {busy:[{start,end}], free:[{start,end}]} OR {available:boolean} when a candidate start/end is passed. Backs both pre-create conflict UI and the conflict-detection rule. Branch scoped."
+      }
+    ],
+    "validation": "Single zod-per-module pattern living in modules/<entity>/validation/<entity>.validation.ts. Two wiring options — pick the typed-provider one for ergonomics:\n\n(A) Recommended: fastify-type-provider-zod. In app.ts: `app.setValidatorCompiler(validatorCompiler); app.setSerializerCompiler(serializerCompiler)` and type routes with `app.withTypeProvider<ZodTypeProvider>()`. Then attach schemas declaratively: `app.post('/', { schema: { body: createPatientSchema, querystring: listPatientsQuery, params: idParamSchema } }, handler)`. Fastify validates before the handler; failures surface as FST_ERR_VALIDATION which the global error handler maps to 400. req.body/query/params are fully typed via z.infer.\n(NOTE: fastify-type-provider-zod is NOT yet in package.json — add it, OR use option B with zero new deps.)\n\n(B) Zero-dep manual parse in the controller: `const dto = createPatientSchema.parse(req.body)` (or safeParse). Wrap so a ZodError is caught by the global error handler and turned into 400 with flattened field errors. Keeps you on the already-installed zod only.\n\nConventions: every module exports createX (required fields), updateX = createX.partial(), listXQuery (search/page/pageSize/filters with coercion z.coerce.number for query strings, z.coerce.date for from/to), idParamSchema = z.object({ id: z.string().uuid() }). CRITICAL: branchId is NEVER part of any request body/query schema — it is injected from req.branchId only, so clients cannot set it. Date/time fields use z.string().datetime() then coerce. Appointment schema enforces end>start with .refine().",
+    "errorHandling": "Fill src/middleware/error.middleware.ts with a typed AppError hierarchy + a single setErrorHandler, registered in app.ts.\n\n- AppError base: { statusCode, code, message, details? }. Subclasses: BadRequestError(400), UnauthorizedError(401), ForbiddenError(403,'FORBIDDEN'), NotFoundError(404), ConflictError(409,'CONFLICT' — used by appointment overlap), ValidationError(400). Services throw these; controllers/repos stay clean.\n- `app.setErrorHandler((err, req, reply) => { ... })` mapping:\n  • err instanceof ZodError -> 400 {code:'VALIDATION', errors: err.flatten().fieldErrors}.\n  • err.validation (Fastify/zod-provider FST_ERR_VALIDATION) -> 400 with the validation array.\n  • err instanceof AppError -> err.statusCode + {code, message, details}.\n  • @fastify/jwt errors (FST_JWT_*) / our UnauthorizedError -> 401 {code:'UNAUTHORIZED'}.\n  • Postgres unique_violation (err.code==='23505') -> 409; foreign_key_violation ('23503') -> 400/409 with a friendly message.\n  • default -> log full err (app.log.error), return 500 {code:'INTERNAL', message:'Internal Server Error'} and NEVER leak stack/SQL to the client. Include a requestId (reply.request.id) in the body for support.\n- 404 for unknown routes: `app.setNotFoundHandler((req, reply) => reply.code(404).send({ code:'NOT_FOUND', message:'Route not found', path: req.url }))`.\n- Uniform response envelope: success -> raw data (or {data}); errors -> {code, message, errors?, requestId}. Document this once so the frontend axios interceptor can map it.",
+    "buildOrder": [
+      "1. Foundation/types: add src/types/fastify.d.ts (augment FastifyRequest with authUser, branchId; FastifyInstance with authenticate, resolveBranch, db). Add tsconfig already has @/* alias — keep using .ts extension imports.",
+      "2. DB client: create src/db/client.ts (postgres-js pool + drizzle(schema)) and src/lib/supabase.ts (service-role client). No tables yet — wire empty schema barrel.",
+      "3. Schema first (everything scopes on it): clinics + branches + branch_members (membership = auth source for scoping), then dentists, staff(role enum), patients(primaryDentistId FK), appointments(dentistId+patientId FK, start/end). Every domain table gets branchId uuid NOT NULL + FK to branches, timestamps, and a btree index on (branchId) (+ appointments index on (branchId,dentistId,start)). Put each table under its module's schema/ folder so drizzle.config.ts glob picks it up.",
+      "4. Migrations: bun run db:generate then db:migrate (or db:push for dev) against Supabase DATABASE_URL. Verify tables land in the Supabase Postgres.",
+      "5. Error handling: fill src/middleware/error.middleware.ts (AppError hierarchy + setErrorHandler + setNotFoundHandler) and register both in app.ts.",
+      "6. Auth + branch middleware: fill src/middleware/auth.middleware.ts; register @fastify/jwt with JWT_SECRET; decorate authenticate (jwtVerify) + resolveBranch (membership check from branch_members, reads X-Branch-Id). Add loadUserBranchIds helper.",
+      "7. Validation wiring: choose zod manual-parse (no new dep) or add fastify-type-provider-zod; set validator/serializer compilers in app.ts if using the provider.",
+      "8. First vertical slice — branches + /api/me: prove auth, JWT verify, membership scoping, error handler, and the response envelope end-to-end (this also unblocks the frontend branch switcher).",
+      "9. dentists module (full CRUD) — needed before patients/appointments because both FK to it.",
+      "10. staff module (CRUD) + /api/staff/roster combined projection (dentists-as-Doctor UNION staff).",
+      "11. patients module (CRUD) with primaryDentistId validated against dentists in same branch.",
+      "12. appointments module: list-by-range, CRUD, then the conflict-detection service + GET /api/appointments/availability (overlap query excluding self).",
+      "13. /api/overview/stats counts.",
+      "14. Cross-cutting hardening: confirm EVERY repository injects eq(table.branchId, req.branchId); add integration tests that a user of branch A gets 404/empty for branch B rows and that body.branchId is ignored. Then frontend: axios client reading VITE_API_URL + Supabase access token + X-Branch-Id header, react-query hooks per feature, route guards from useAuthStore."
+    ],
+    "envVars": [
+      "DATABASE_URL (Supabase Postgres connection string for Drizzle/postgres-js; use the pooler URL with prepare:false in serverless/pgBouncer mode)",
+      "SUPABASE_URL (project URL; base for JWKS .well-known if you later move to asymmetric keys)",
+      "SUPABASE_SERVICE_ROLE_KEY (server-only admin client in src/lib/supabase.ts; NEVER sent to client)",
+      "SUPABASE_ANON_KEY (only if backend ever calls Supabase as the user; otherwise frontend-only)",
+      "JWT_SECRET (Supabase project JWT secret; HS256 verify of access tokens in @fastify/jwt)",
+      "PORT (already used by server.ts, default 3000)",
+      "HOST (already used by server.ts, default 0.0.0.0)",
+      "NODE_ENV (gate verbose error/stack exposure: only non-production may echo details)",
+      "FRONTEND_URL (already used by app.ts cors origin; default http://localhost:5173)",
+      "Frontend (apps/frontend/.env): VITE_API_URL (axios baseURL, e.g. http://localhost:3000/api), VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY"
+    ],
+    "notes": "Grounding confirmed against the repo: app.ts already registers @fastify/cors + @fastify/helmet and uses top-level await (Bun) and `export default app`; server.ts calls app.listen and is fine as-is. drizzle.config.ts globs schema at ./src/modules/**/schema/*.ts (dialect postgresql, out ./drizzle) — so all pgTable files MUST live under modules/*/schema/. The module folder convention is ALREADY scaffolded as 0-byte stubs under modules/auth/{controller,repository,routes,schema,services,types,validation} and middleware/{auth,error,upload}.middleware.ts — replicate it for patients/dentists/staff/appointments/branches and FILL auth+error middleware. tsconfig has paths @/*->src/* and allowImportingTsExtensions (import with explicit .ts). @fastify/jwt, @supabase/supabase-js, drizzle-orm, postgres, zod are all already in package.json; fastify-type-provider-zod is the ONLY optional add.\n\nKey design guarantees: (1) Doctors(dentists table) and Staff(staff table) are physically separate; the combined /staff roster is a read-only service projection (GET /api/staff/roster) — patients.primaryDentistId and appointments.dentistId FK to dentists, never staff. (2) Multi-branch defense-in-depth: active branch comes from X-Branch-Id header, validated against server-side branch_members membership in resolveBranch; every repository still hard-filters eq(table.branchId, req.branchId) and forces branchId on insert; client body branchId is always discarded. (3) Appointments are calendar-first: list is range-based (from/to) and a dedicated /api/appointments/availability + conflict-detection on create/update (409 ConflictError) backs the grid. The upload.middleware.ts stub stays empty for MVP (imaging deferred)."
+  },
+  "frontend": {
+    "apiClient": "## Axios API client — `src/lib/api-client.ts` (NEW)\n\nSingle axios instance. Base URL from `import.meta.env.VITE_API_URL` (add `apps/dashboard/.env` with `VITE_API_URL=http://localhost:3000` and `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`; add a `vite-env.d.ts` `ImportMetaEnv` interface for type-safety). The Supabase token is read at REQUEST time from the supabase client (not from a stale closure), so it always sends the freshest (auto-refreshed) JWT.\n\n```ts\nimport axios, { AxiosError } from 'axios'\nimport { supabase } from './supabase'\n\nexport const apiClient = axios.create({\n  baseURL: import.meta.env.VITE_API_URL,\n  headers: { 'Content-Type': 'application/json' },\n})\n\n// REQUEST: inject Supabase access token. getSession() returns the cached,\n// already-refreshed session synchronously from memory in the common case.\napiClient.interceptors.request.use(async (config) => {\n  const { data } = await supabase.auth.getSession()\n  const token = data.session?.access_token\n  if (token) config.headers.Authorization = `Bearer ${token}`\n  return config\n})\n\n// RESPONSE: on 401, sign out + hard-redirect to /login (preserving return path).\n// Use window.location (not useNavigate) because interceptors live outside React.\napiClient.interceptors.response.use(\n  (res) => res,\n  async (error: AxiosError) => {\n    if (error.response?.status === 401 && !window.location.pathname.startsWith('/login')) {\n      await supabase.auth.signOut()\n      const returnTo = encodeURIComponent(window.location.pathname + window.location.search)\n      window.location.assign(`/login?returnTo=${returnTo}`)\n    }\n    return Promise.reject(error)\n  },\n)\n```\n\nNotes: avoid an axios redirect loop by skipping the redirect when already on `/login`. The backend Fastify JWT middleware returns 401 for missing/expired/invalid tokens; this interceptor is the single client-side handler. The active branch header is added by a SECOND request interceptor described in `branchContext` (keep the two interceptors in this same file so order is explicit). The existing `useAuthStore.logout()` should also be called inside the supabase `onAuthStateChange` handler (see `supabaseClient`) so the store clears on this 401-triggered signOut too.",
+    "supabaseClient": "## Supabase client + session→store bridge\n\nFirst: `bun add @supabase/supabase-js` IN `apps/dashboard` — it is currently only a backend dependency, NOT in the dashboard `package.json`.\n\n### `src/lib/supabase.ts` (NEW)\n```ts\nimport { createClient } from '@supabase/supabase-js'\nexport const supabase = createClient(\n  import.meta.env.VITE_SUPABASE_URL,\n  import.meta.env.VITE_SUPABASE_ANON_KEY,\n  { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } },\n)\n```\n`persistSession: true` makes supabase-js own token persistence in `localStorage` — so on refresh the session rehydrates automatically and the existing `useAuthStore` does NOT need its own persist middleware for tokens. The store stays a derived in-memory mirror.\n\n### `src/features/auth/services/index.ts` (REPLACES `export {}`)\nThin wrappers over `supabase.auth`:\n```ts\nexport const authService = {\n  signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),\n  signUp: (email, password) => supabase.auth.signUp({ email, password }),\n  signOut: () => supabase.auth.signOut(),\n  resetPassword: (email) => supabase.auth.resetPasswordForEmail(email),\n  getSession: () => supabase.auth.getSession(),\n}\n```\n\n### `src/features/auth/AuthProvider.tsx` (NEW) — the bridge\nMount ONCE near the app root (wrap inside `Providers`, see `authGuard`). It (1) hydrates the store from the existing session on mount, and (2) subscribes to `onAuthStateChange` so SIGNED_IN / SIGNED_OUT / TOKEN_REFRESHED keep the EXISTING `useAuthStore` in sync. It maps the Supabase `User` → the store's `User` shape (`{ id, email, name, avatar?, createdAt }`), pulling `name`/`avatar` from `user.user_metadata`.\n\n```ts\nfunction mapUser(u: SupabaseUser): User {\n  return {\n    id: u.id, email: u.email ?? '',\n    name: u.user_metadata?.name ?? u.email?.split('@')[0] ?? '',\n    avatar: u.user_metadata?.avatar_url,\n    createdAt: u.created_at,\n  }\n}\n// in effect:\nsupabase.auth.getSession().then(({ data }) =>\n  setUser(data.session ? mapUser(data.session.user) : null))\nconst { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {\n  setUser(session ? mapUser(session.user) : null)\n  if (!session) queryClient.clear()   // drop cached PHI on logout\n})\nreturn () => sub.subscription.unsubscribe()\n```\nAdd an `isLoading` boolean to the provider (true until the first `getSession()` resolves) so the guard can show a spinner instead of bouncing a logged-in user to /login on a hard refresh. The existing `useAuthStore` interface (`user`, `isAuthenticated`, `setUser`, `logout`) is reused AS-IS — `setUser(null)` already flips `isAuthenticated` false. The `LoginForm` calls `authService.signIn`; on success the listener populates the store and the form navigates to `returnTo` (default `/`).",
+    "authGuard": "## Route guard + 404 + onboarding fix — edits to `src/app/router.tsx`\n\nUse a component guard (cleanest fit with the existing `createBrowserRouter` + lazy element pattern; data-router loaders would force every protected page into a loader). \n\n### `src/features/auth/components/ProtectedRoute.tsx` (NEW)\n```tsx\nexport function ProtectedRoute() {\n  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)\n  const { isLoading } = useAuth()           // from AuthProvider\n  const location = useLocation()\n  if (isLoading) return <FullPageSpinner />  // don't redirect before session resolves\n  if (!isAuthenticated)\n    return <Navigate to=\"/login\" replace state={{ from: location }} />\n  return <Outlet />\n}\n```\n`LoginForm` reads `location.state?.from` (or `?returnTo`) and navigates back there after sign-in.\n\n### Wire into the router\nWrap the `DashboardLayout` branch so EVERY dashboard route is gated. The onboarding and auth branches stay public:\n```tsx\n{\n  element: <ProtectedRoute />,\n  children: [\n    { element: <DashboardLayout />, children: [ /* existing / , /patients, ... /settings */ ] },\n  ],\n},\n```\nOptionally add an inverse `PublicOnlyRoute` on the auth branch to bounce already-logged-in users away from `/login`.\n\n### AuthProvider mounting (`src/app/index.tsx`)\nWrap `<RouterProvider>` with `<AuthProvider>` INSIDE `<Providers>` so both react-query and supabase context are available to the guard.\n\n### Catch-all 404 (currently NONE — unknown URLs render blank)\nAdd `src/components/common/NotFoundPage.tsx` and a top-level catch-all at the END of the `createBrowserRouter` array: `{ path: '*', element: <PageSuspense><NotFoundPage /></PageSuspense> }`. It offers a \"Back to dashboard\" link to `/`.\n\n### Onboarding `/onboarding/voice` dead-end (BUG)\n`SpecialtyStep.tsx:98` and `PlansStep.tsx:203` both `navigate('/onboarding/voice')`, but no such route exists in `router.tsx` (lines 80-93 only define welcome, identity, setup, specialty, working-hours, plans) → blank screen. Fix: re-point both to the real next step. SpecialtyStep should go to `/onboarding/working-hours`; PlansStep is the last step so it should complete onboarding and go to `/` (set `useOnboardingStore` complete flag, then `navigate('/')`). If a voice step is genuinely intended, instead add the route + page — but per MVP scope, re-point is correct.",
+    "branchContext": "## Active-branch context/store + header switcher + query/request flow\n\n### `src/features/branches/store/branch.store.ts` (NEW) — zustand + persist\nMirror the existing `auth.store` style but with persist (branch selection must survive refresh):\n```ts\ninterface BranchState {\n  activeBranchId: string | null\n  setActiveBranch: (id: string) => void\n}\nexport const useBranchStore = create<BranchState>()(\n  persist((set) => ({ activeBranchId: null, setActiveBranch: (id) => set({ activeBranchId: id }) }),\n    { name: 'dentai-active-branch' }),\n)\n```\nSelection of the DEFAULT branch: once the real `useBranches()` query resolves (replacing the hardcoded `BRANCHES` arrays), an effect in `AuthProvider`/`BranchProvider` sets `activeBranchId` to the user's main branch if none is persisted. If a persisted id is no longer in the user's branch list, reset to the main branch.\n\n### Header switcher — replace the mock in `Header.tsx`\n`Header.tsx:24-28` hardcodes `BRANCHES` and `Header.tsx:72` uses local `useState(BRANCHES[0])`. Replace with: `const { data: branches } = useBranches()` and `const { activeBranchId, setActiveBranch } = useBranchStore()`. The existing dropdown UI (lines 178-216, the `Building2` + `switchBranch` label + `Check` mark) stays; just map over real `branches` and call `setActiveBranch(branch.id)` in `onClick`, deriving `activeBranch` by `branches.find(b => b.id === activeBranchId)`. The identical mock array in `BranchesPage` is likewise replaced by `useBranches()`.\n\n### How branch_id flows into EVERY query key + request\nTwo mechanisms, both keyed off `activeBranchId`:\n\n1. **Request header** — a second interceptor in `api-client.ts` reads the store OUTSIDE React via `useBranchStore.getState()`:\n```ts\napiClient.interceptors.request.use((config) => {\n  const branchId = useBranchStore.getState().activeBranchId\n  if (branchId) config.headers['X-Branch-Id'] = branchId\n  return config\n})\n```\nThe backend trusts `X-Branch-Id` only after verifying the JWT subject is a member of that branch (membership check in the Fastify auth/tenancy middleware), then scopes every Drizzle query with `where(eq(table.branchId, branchId))`. Optionally also pass `branchId` as a query param per request for explicitness.\n\n2. **Query key** — `branchId` is the FIRST segment of every feature query key so switching branches auto-refetches and never shows another branch's cached rows. Standardize a key factory per feature:\n```ts\nexport const patientKeys = {\n  all: (branchId: string) => ['patients', branchId] as const,\n  list: (branchId: string, filters?: PatientFilters) => [...patientKeys.all(branchId), { filters }] as const,\n  detail: (branchId: string, id: string) => [...patientKeys.all(branchId), id] as const,\n}\n```\nHooks pull `const branchId = useBranchStore((s) => s.activeBranchId)` and pass it into the key + `enabled: !!branchId`. Mutations `invalidateQueries({ queryKey: patientKeys.all(branchId) })`. Because the key changes with the branch, the branch switcher needs no manual invalidation — react-query swaps cache buckets automatically.",
+    "reactQueryPattern": "## Standard per-feature pattern (replaces the `export {}` stubs)\n\nEvery MVP feature folder (`patients`, `dentists`, `appointments`, `staff`) gets the SAME four-file shape, filling the currently-empty `services/index.ts`, `hooks/index.ts`, `schemas/index.ts`, `types/index.ts`:\n\n### 1. `schemas/index.ts` — zod, single source of truth for forms + types\nOne create/update schema; derive TS types with `z.infer`. The server row type (with `id`, `branchId`, timestamps) is a separate `type`. Use the same react-hook-form + `@hookform/resolvers/zod` stack already used by the auth schemas (`login.schema.ts`).\n\n### 2. `services/index.ts` — pure async functions over `apiClient`\nNo react-query here; just typed HTTP. Each takes explicit args (NOT reading the store) so they're testable; the hooks own store reads. Endpoints are branch-scoped server-side via the `X-Branch-Id` header, so service signatures stay clean (`list(filters)`, `getById(id)`, `create(payload)`, `update(id, payload)`, `remove(id)`).\n\n### 3. `hooks/index.ts` — react-query query + mutation hooks\n- `useXxx()` list query: `useQuery({ queryKey: keys.list(branchId, filters), queryFn: () => service.list(filters), enabled: !!branchId })`.\n- `useXxxById(id)` detail query.\n- `useCreateXxx()`, `useUpdateXxx()`, `useDeleteXxx()` mutations that `invalidateQueries({ queryKey: keys.all(branchId) })` in `onSuccess`.\n- A `keys` factory (branch-scoped, see `branchContext`) lives at the top of this file (or a small `keys.ts`).\n\n### 4. `types/index.ts` — row + filter types\nServer row type, list-filter type, re-export the zod-inferred form types.\n\nThis pattern means a page never imports axios or query keys directly — it consumes hooks. The existing `QueryClient` in `providers.tsx` (staleTime 5m, retry 1) is reused unchanged; it's currently configured but UNUSED, so this pattern is what finally activates it.",
+    "exampleFeatureWiring": "## PATIENTS end-to-end (concrete, copy-ready)\n\n### `src/features/patients/schemas/index.ts`\n```ts\nimport { z } from 'zod'\nexport const patientSchema = z.object({\n  firstName: z.string().min(1, 'Required'),\n  lastName: z.string().min(1, 'Required'),\n  email: z.string().email().or(z.literal('')).optional(),\n  phone: z.string().min(5, 'Required'),\n  dateOfBirth: z.string().optional(),           // ISO date\n  gender: z.enum(['male', 'female', 'other']).optional(),\n  primaryDentistId: z.string().uuid().nullable().optional(), // FK -> dentists (NOT staff)\n  status: z.enum(['active', 'inactive']).default('active'),\n})\nexport type PatientFormData = z.infer<typeof patientSchema>\n```\n\n### `src/features/patients/types/index.ts`\n```ts\nexport interface Patient extends PatientFormData {\n  id: string; branchId: string; createdAt: string; updatedAt: string\n}\nexport interface PatientFilters { search?: string; status?: 'active' | 'inactive' }\n```\n\n### `src/features/patients/services/index.ts`\n```ts\nimport { apiClient } from '@/lib/api-client'\nexport const patientService = {\n  list: (f?: PatientFilters) => apiClient.get<Patient[]>('/patients', { params: f }).then(r => r.data),\n  getById: (id: string) => apiClient.get<Patient>(`/patients/${id}`).then(r => r.data),\n  create: (p: PatientFormData) => apiClient.post<Patient>('/patients', p).then(r => r.data),\n  update: (id: string, p: PatientFormData) => apiClient.patch<Patient>(`/patients/${id}`, p).then(r => r.data),\n  remove: (id: string) => apiClient.delete(`/patients/${id}`).then(r => r.data),\n}\n```\n\n### `src/features/patients/hooks/index.ts`\n```ts\nconst keys = {\n  all: (b: string) => ['patients', b] as const,\n  list: (b: string, f?: PatientFilters) => [...keys.all(b), { f }] as const,\n}\nexport function usePatients(filters?: PatientFilters) {\n  const branchId = useBranchStore((s) => s.activeBranchId)!\n  return useQuery({ queryKey: keys.list(branchId, filters),\n    queryFn: () => patientService.list(filters), enabled: !!branchId })\n}\nexport function useCreatePatient() {\n  const qc = useQueryClient(); const branchId = useBranchStore((s) => s.activeBranchId)!\n  return useMutation({ mutationFn: patientService.create,\n    onSuccess: () => qc.invalidateQueries({ queryKey: keys.all(branchId) }) })\n}\nexport function useUpdatePatient() { /* mutationFn: ({id,data}) => patientService.update(id,data); same invalidate */ }\nexport function useDeletePatient() { /* mutationFn: patientService.remove; same invalidate */ }\n```\n\n### List table — `src/features/patients/components/PatientsTable.tsx`\nREUSE the `BranchesPage` UI verbatim: same `rounded-2xl border bg-card` card, the search `Input` toolbar (ps-9 + `Search` icon), the raw `<table>` with `text-[11px] uppercase` `<th>`, `group hover:bg-muted/20` rows, the per-row `DropdownMenu` (`MoreHorizontal` trigger, opacity-0 group-hover) for Edit/Delete, and the brand teal `Button` (`bg-[#04CF9E]`) \"Add patient\" in the header. Swap branch columns for: Name (avatar-initials cell like the branches name cell), Phone, Primary dentist, Status badge (the same emerald active / muted inactive pill). Data comes from `usePatients(filters)` instead of the `INITIAL_BRANCHES` `useState`; `search` stays local state passed as a filter.\n\n### Create/Edit form — `src/features/patients/components/PatientFormSheet.tsx`\nNOTE: there is NO `dialog.tsx` in `src/components/ui` (only `sheet.tsx`). Use the existing **`Sheet`** (`SheetContent side=\"right\"`) as the create/edit drawer — no new dependency. Inside: `react-hook-form` + `zodResolver(patientSchema)`, fields built from `Input`, `Label`, and `Select` (for gender / status / primaryDentist). The dentist picker is populated by `useDentists()` (the dentists feature, NOT staff) so a patient's primary provider is a dentist row, honoring the locked decision. Submit calls `useCreatePatient()` / `useUpdatePatient()`; on success close the sheet and `toast`. The `PatientsTable` \"Add patient\" button opens it with no `patient` prop (create); each row's Edit action opens it with the row (edit, fields pre-filled via `defaultValues`).\n\n### Page — `src/features/patients/pages/PatientsPage.tsx`\nReplace the current placeholder (just an `<h1>`) with `<PatientsTable />` driving the sheet. Same pattern is then cloned for Dentists and Staff; Staff additionally derives its \"Doctor\" filter rows from `useDentists()` and links those to `/dentists` for edit (per locked decision 1).",
+    "filesToCreate": [
+      "apps/dashboard/.env (VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)",
+      "apps/dashboard/src/vite-env.d.ts (ImportMetaEnv typing)",
+      "apps/dashboard/src/lib/supabase.ts",
+      "apps/dashboard/src/lib/api-client.ts (token + branch + 401 interceptors)",
+      "apps/dashboard/src/features/auth/AuthProvider.tsx (session->useAuthStore bridge, isLoading)",
+      "apps/dashboard/src/features/auth/components/ProtectedRoute.tsx",
+      "apps/dashboard/src/features/auth/components/PublicOnlyRoute.tsx (optional)",
+      "apps/dashboard/src/features/branches/store/branch.store.ts (zustand + persist)",
+      "apps/dashboard/src/features/branches/services/index.ts (replace export {})",
+      "apps/dashboard/src/features/branches/hooks/index.ts (useBranches, replace export {})",
+      "apps/dashboard/src/components/common/NotFoundPage.tsx (catch-all 404)",
+      "apps/dashboard/src/features/patients/schemas/index.ts (replace export {})",
+      "apps/dashboard/src/features/patients/types/index.ts (replace export {})",
+      "apps/dashboard/src/features/patients/services/index.ts (replace export {})",
+      "apps/dashboard/src/features/patients/hooks/index.ts (replace export {})",
+      "apps/dashboard/src/features/patients/components/PatientsTable.tsx",
+      "apps/dashboard/src/features/patients/components/PatientFormSheet.tsx",
+      "apps/dashboard/src/features/patients/pages/PatientsPage.tsx (replace placeholder)"
+    ],
+    "notes": "## Key findings that change the plan\n\n1. **Project root is `apps/dashboard/`** (a monorepo `apps/*` layout), not the repo root. All paths above are relative to that.\n\n2. **`@supabase/supabase-js` is NOT installed in the dashboard** — it's only in the backend's deps. Must `bun add @supabase/supabase-js` in `apps/dashboard` before any of the supabase code compiles. (`axios`, `@tanstack/react-query`, `zustand`, `react-hook-form`, `@hookform/resolvers`, `zod` ARE already present.)\n\n3. **No `dialog.tsx` exists** in `src/components/ui` despite the brief listing it. Available overlay primitive is `sheet.tsx`. I designed the patients create/edit as a **Sheet drawer** to avoid adding an unverified dependency. If a centered modal is preferred, a shadcn `dialog.tsx` must be generated first.\n\n4. **No `table.tsx`-based pattern is used by branches** — `BranchesPage` uses a raw `<table>`. I follow that raw-table pattern for `PatientsTable` exactly as instructed (there IS a `table.tsx` primitive available if you'd rather standardize later).\n\n5. **Two mock branch arrays must be replaced**: `Header.tsx:24-28` (`BRANCHES`) drives the switcher, and `BranchesPage.tsx:34-71` (`INITIAL_BRANCHES`) drives the admin table. Both become `useBranches()` consumers; the switcher writes to the persisted `useBranchStore`.\n\n6. **Router currently has zero guards and zero catch-all** (`router.tsx` ends at line 152 with no `path: '*'`). Unknown URLs render blank. Both gaps are addressed.\n\n7. **Onboarding dead-end confirmed**: `/onboarding/voice` is navigated to from `SpecialtyStep.tsx:98` and `PlansStep.tsx:203` but is NOT a registered route (`router.tsx` onboarding children are welcome/identity/setup/specialty/working-hours/plans). Re-point SpecialtyStep -> `/onboarding/working-hours`, PlansStep -> complete + `/`.\n\n8. **`useAuthStore` needs no shape change** — it already exposes `setUser`/`logout` and derives `isAuthenticated`. supabase-js owns token persistence (`persistSession`), so the store stays a derived in-memory mirror; only the branch store needs `persist`.\n\n9. **i18n/RTL**: all new UI uses logical props already in the codebase (`ms-/me-/ps-/start-/end-`) so it stays RTL-correct for the `ar` locale; add `patients.*` and `header.*`/`notFound.*` keys to the en/ar i18n bundles.\n\n10. **StrictMode double-invoke**: the `onAuthStateChange` subscription in `AuthProvider` must be cleaned up in the effect return (shown) to avoid duplicate listeners in dev."
+  },
+  "calendar": {
+    "libraryChoice": "RECOMMENDED: react-big-calendar (RBC) v1.x with the date-fns localizer, themed via Tailwind v4 by overriding its class hooks in globals.css. Add deps: `react-big-calendar` + `date-fns` (date-fns is also reusable across patients/dentists/staff date formatting and i18n, so it is not calendar-only weight). This is the pragmatic MVP pick over the two alternatives:\n\nvs FULLCALENDAR (@fullcalendar/react + daygrid/timegrid/interaction): The most feature-complete (built-in month/week/day/list, drag/resize, recurring events, its own date engine so no extra date lib). BUT (1) heaviest bundle (~250-400KB across plugin packages, multiplied by your route is lazy-loaded so acceptable, but still the largest of the three); (2) it injects its own scoped CSS and uses CSS custom props for theming — it does NOT consume Tailwind utility classes, so matching the #04CF9E brand + the rounded-2xl/border-border/60 card language means writing a parallel `--fc-*` variable override sheet rather than reusing existing tokens; (3) premium/timeline (resource-per-dentist day columns) views are behind the paid FullCalendar Premium license — the free MIT core covers month/week/day/list which is all the MVP needs, but the resource-timeline view that would be ideal for \"columns per dentist\" is NOT free; (4) React 19 works but the React wrapper is a thin imperative bridge that fights React's declarative model (you manage state via refs/eventChange callbacks). Choose FullCalendar only if drag/resize and a polished out-of-box week grid are must-haves on day one.\n\nvs CUSTOM WEEK/DAY GRID (CSS grid of time-rows x day-cols, absolutely-positioned event blocks): Smallest bundle, total control over RTL + Tailwind theming (cleanest brand match), no licensing, perfect React 19 fit. BUT you hand-build time-axis math, slot click-to-create hit-testing, overlap/lane layout for concurrent events, all-day row, current-time indicator, and keyboard a11y — realistically 2-3x the build time of RBC for parity, and it is exactly the surface where subtle RTL bugs live. Defensible long-term once the design is settled; wrong call for an MVP on a deadline.\n\nWHY RBC WINS FOR THIS REPO: React-native (declarative events array, onSelectSlot/onSelectEvent callbacks map 1:1 to the click-to-create/click-to-edit flows), MIT-licensed (free month+week+day+agenda), moderate bundle (~120-150KB + date-fns, lazy-loaded with the route), and it themes through plain CSS class hooks (.rbc-event, .rbc-today, .rbc-toolbar, .rbc-time-slot) so the brand teal and card chrome are applied in globals.css using the existing @theme tokens. CRITICAL CAVEATS to plan for: RBC's RTL support is incomplete — it has no `rtl` prop, so Arabic requires CSS overrides (see rtlNotes); and use the date-fns localizer (not the legacy moment localizer) to avoid pulling moment. Per-dentist columns are achieved via RBC `resources` (resourceIdAccessor/resourceTitleAccessor) in day view, which is free in RBC (unlike FullCalendar). Replace the hardcoded `<dialog>`-less UI by first creating a real `src/components/ui/dialog.tsx` wrapping @radix-ui/react-dialog (already installed; today only sheet.tsx uses the primitive).",
+    "views": [
+      "Month (rbc 'month'): default landing view, scoped to active branch; shows appointment dots/chips per day with a +N overflow; clicking a day drills into Day view, clicking empty space opens create dialog prefilled with that date.",
+      "Week (rbc 'week'): time-grid Sun–Sat (locale-aware first day; ar should start Saturday/Sunday per clinic), business-hours band highlighted, click-drag a range to pre-fill start/end in the create dialog.",
+      "Day (rbc 'day'): primary operational view. Use RBC `resources` to render ONE COLUMN PER DENTIST for the active branch so per-dentist double-booking is visually obvious; current-time indicator on.",
+      "Agenda (rbc 'agenda'): chronological list fallback — doubles as the lightweight 'list' the owner originally feared losing, good for mobile/RTL where the time-grid is cramped, and reuses the BranchesPage table visual language.",
+      "(Deferred) Resource-timeline / multi-day staff scheduling and a dedicated mobile day-scroller — note these explicitly as post-MVP so scope stays month/week/day/agenda."
+    ],
+    "createEditFlow": "CREATE (click empty slot): RBC `selectable` + onSelectSlot({start,end,resourceId}) opens a Radix Dialog (new `src/components/ui/dialog.tsx`). Form built with the already-installed react-hook-form + @hookform/resolvers + zod (mirror the feature template's schemas/ folder: appointments/schemas/appointment.schema.ts). Fields: Patient picker (searchable Select/combobox over patients in active branch — react-query `usePatients(branchId)`), Dentist picker (Select over dentists table in active branch — `useDentists(branchId)`; if slot was clicked in a dentist column, prefill resourceId), Start/End datetime (prefilled from the dragged slot; end defaults to start + clinic default duration e.g. 30m), Status (Select: scheduled | confirmed | completed | cancelled | no_show), Reason/notes (Input/textarea). Submit -> `useCreateAppointment` mutation -> POST /appointments; on success invalidate ['appointments', branchId, range] and optimistically insert. All trigger buttons reuse the BranchesPage button style (rounded-[10px] bg-[#04CF9E]). Use logical props (me-2/ps-9) so it mirrors in RTL.\n\nEDIT (click event): onSelectEvent(event) opens the SAME dialog in edit mode, prefilled from the event's appointment payload. Save -> `useUpdateAppointment` PATCH /appointments/:id.\n\nCANCEL/DELETE: In the edit dialog, a 'Cancel appointment' action sets status='cancelled' (soft — keeps the row, greys the event via .rbc-event status class) rather than hard delete; a separate destructive 'Delete' (DropdownMenu pattern from BranchesPage, red item) does DELETE /appointments/:id for mistakes. Confirm destructive delete with a small AlertDialog.\n\nDRAG / RESIZE: DEFERRED for MVP. RBC supports it via the `withDragAndDrop` HOC (onEventDrop/onEventResize), but enabling it adds conflict-recheck-on-drop complexity and RTL drag math is fragile. Ship create/edit-via-dialog first; add drag/resize in a fast-follow once conflict detection is proven. Mark clearly as deferred in the ticket.",
+    "conflictHandling": "Per-dentist double-booking = two appointments for the SAME dentist_id whose [start,end) intervals OVERLAP within the same branch (overlap test: aStart < bEnd AND bStart < aEnd), excluding cancelled/no_show statuses and excluding the row being edited (by id).\n\nFRONTEND PRE-CHECK (fast UX, NOT authoritative): The calendar already holds the active range's appointments in the react-query cache. On dialog submit (and live as the dentist/time fields change), run a client-side overlap scan against cached events for the chosen dentist_id in the active branch; if it collides, show an inline warning under the time field ('Dr. X already has an appointment 10:00–10:30') and disable/soft-block submit. This is advisory only — the cache can be stale, so never treat a clean client check as permission.\n\nBACKEND AUTHORITATIVE CHECK (source of truth): On POST/PATCH, inside a transaction, query for any existing appointment with same branch_id + dentist_id, status NOT IN ('cancelled','no_show'), id <> :editingId, and tstzrange(start_time,end_time) overlap. Best implemented as a Postgres EXCLUSION CONSTRAINT using btree_gist: `EXCLUDE USING gist (branch_id WITH =, dentist_id WITH =, tstzrange(start_time,end_time) WITH &&) WHERE (status NOT IN ('cancelled','no_show'))` — the DB itself rejects overlaps atomically (race-safe under concurrent bookings, which an app-level SELECT-then-INSERT cannot guarantee). The Fastify handler catches the constraint violation and returns 409 Conflict with a typed body `{ code: 'APPOINTMENT_CONFLICT', conflictingId }`. Frontend mutation onError surfaces a toast and re-runs the client check so the two stay consistent. Note: the partial-index WHERE on an exclusion constraint requires btree_gist; if Drizzle can't express it inline, add it via a raw SQL migration in ./drizzle.",
+    "dataModelMapping": "RBC event <-> appointments row mapping. New Drizzle schema at apps/backend/src/modules/appointments/schema/appointments.schema.ts (matches drizzle.config glob ./src/modules/**/schema/*.ts):\nappointments {\n  id uuid pk default gen_random_uuid(),\n  branch_id uuid NOT NULL FK -> branches(id)   // tenancy: scoped in EVERY query\n  patient_id uuid NOT NULL FK -> patients(id),\n  dentist_id uuid NOT NULL FK -> dentists(id),  // references DENTISTS table, never staff (locked decision #1)\n  start_time timestamptz NOT NULL,\n  end_time   timestamptz NOT NULL,\n  status     text NOT NULL default 'scheduled'  // enum: scheduled|confirmed|completed|cancelled|no_show\n  reason     text,\n  notes      text,\n  created_at/updated_at timestamptz\n}\nIndexes: (branch_id, dentist_id, start_time); the btree_gist EXCLUDE constraint above. All three FKs themselves carry branch_id consistency (patient and dentist must belong to the same branch — validate in service layer).\n\nRBC event object shape (calendar/services maps API->event):\n{ id, title: `${patient.name} · ${reason ?? status}`, start: new Date(start_time), end: new Date(end_time), resourceId: dentist_id, allDay: false, _raw: <full appointment dto> }\nresourceIdAccessor='resourceId' + resources=[{ resourceId: dentist.id, resourceTitle: dentist.name }] drives the per-dentist day columns.\n\nAPI (Fastify, JWT-protected via the to-be-built auth middleware, zod-validated):\nGET    /appointments?branchId&from&to&dentistId?  -> list for the visible range (react-query key ['appointments', branchId, {from,to}])\nPOST   /appointments        (zod body) -> 201 | 409 conflict\nPATCH  /appointments/:id    -> 200 | 409\nDELETE /appointments/:id    -> 204\nEvery query filters by branch_id taken from the active-branch context header/param AND re-validated against the JWT's allowed branches server-side (do not trust the client's branchId alone).\n\nFRONTEND data layer (fills the empty stubs): appointments/services/appointments.api.ts (axios client reading VITE_API_URL, injecting the Supabase access token — this api client must be created, it doesn't exist yet), appointments/hooks/{useAppointments,useCreateAppointment,useUpdateAppointment,useDeleteAppointment}.ts (react-query). branchId comes from a new active-branch store (promote Header.tsx's local useState BRANCHES into a zustand store or context so the calendar and header share it). Fold /calendar into /appointments: build the grid in features/appointments and redirect /calendar -> /appointments (or delete the calendar feature) to avoid two competing pages.",
+    "rtlNotes": "The app already flips dir via i18n (document.documentElement.dir='rtl' for ar) and globals.css swaps to Cairo font and the codebase consistently uses logical Tailwind classes (ms-/me-/ps-/pe-/start-/end-) — keep that discipline in all new calendar UI and the dialog. RBC-SPECIFIC GOTCHAS: (1) react-big-calendar has NO rtl prop and is not RTL-aware — its time-grid columns, the time gutter, the today-line, and event resize handles are positioned with physical left/right. You must add a `[dir='rtl'] .rbc-* { ... }` override block in globals.css to flip the time gutter to the right edge, reverse day-column order in week/day views, and mirror the toolbar nav buttons. Budget real time for this; it is the single biggest RTL risk. (2) Localization: pass a date-fns locale (ar) to the RBC localizer so month/day names and AM/PM render in Arabic, and set culture/firstDayOfWeek appropriately (Arabic clinics commonly start the week Saturday or Sunday — make it a clinic setting, don't hardcode). (3) Arabic-Indic vs Western digits: decide one convention for times (e.g. keep Western digits 10:00 for clinical clarity) and apply consistently via the formatter. (4) Numerals/time formatting must go through date-fns format with the active locale, not toLocaleString ad hoc. (5) The Radix Dialog respects dir automatically if a dir attribute is on <html> (it is), but verify the patient/dentist Select dropdowns open aligned to the correct side. (6) Test the current-time indicator and drag handles (if/when drag is enabled) specifically in RTL — they're the usual breakage points.",
+    "effort": "Roughly 6-9 working days for one engineer to a solid MVP, assuming the auth/api-client/branch-context foundation is being built in parallel (the calendar DEPENDS on it). Breakdown: backend appointments module — schema + btree_gist exclusion migration + CRUD routes + zod + 409 conflict handling (1.5-2d); create real ui/dialog.tsx + promote active-branch to shared store + axios api client with Supabase token (1d, partly shared infra); RBC integration — install, date-fns localizer, month/week/day/agenda, resources=per-dentist day columns, event mapping, Tailwind/#04CF9E theming (1.5-2d); create/edit/cancel dialog with react-hook-form+zod, patient/dentist pickers wired to react-query (1.5d); frontend conflict pre-check + wiring backend 409 -> toast/inline (0.5-1d); RTL CSS override pass + Arabic locale + manual RTL QA (1-1.5d). Drag/resize is NOT in this estimate (deferred); add ~1-1.5d when scheduled.",
+    "risks": [
+      "RTL is the top risk: RBC is not RTL-aware (no rtl prop) so the time-grid, gutter, and toolbar need hand-written [dir='rtl'] CSS overrides — under-budgeting this is the most likely cause of slippage. A custom grid would avoid the library fight but costs more elsewhere.",
+      "Foundation dependency: the calendar can't ship until the (currently empty) backend auth middleware, JWT verification, Drizzle client/schema/migrations, the axios api client reading VITE_API_URL+Supabase token, and the active-branch context all exist. None are built today (auth.schema.ts/middleware are 0 bytes; no api client; branch switcher is local useState). Sequence these first or the calendar work blocks.",
+      "Race-condition double-booking: an app-level SELECT-then-INSERT cannot prevent two concurrent bookings of the same dentist slot. Must use the Postgres btree_gist EXCLUDE constraint for atomic safety; this needs a raw-SQL migration if Drizzle can't express the partial exclusion inline, and requires enabling the btree_gist extension on the Supabase DB.",
+      "Timezone correctness: store timestamptz and pin a clinic timezone; if the browser sends naive local times the displayed slot can drift vs stored UTC, causing phantom conflicts. Normalize on the backend and format with date-fns + explicit tz.",
+      "Two competing pages: both /calendar (separate feature) and /appointments exist; shipping the grid in one while the other lingers confuses nav/breadcrumbs. Decide now to fold calendar into appointments and redirect.",
+      "Bundle weight: RBC + date-fns + the lazy chunk is fine, but FullCalendar (if chosen instead) is materially heavier and its resource-timeline (ideal per-dentist columns) is PAID — a licensing trap if someone reaches for it later.",
+      "Performance at scale: rendering many overlapping events per dentist column in day view can jank; the GET must be tightly range-scoped (from/to of the visible view) and branch-scoped, not a full-table fetch.",
+      "Patient/dentist pickers need real data + search; with large lists a naive Select will be slow — plan a searchable/virtualized combobox, and ensure both lists are filtered to the active branch (a dentist from another branch must not be selectable)."
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"E:\\\\projects\\\\bussiness projects\\\\clinic management system\\\\frontend\\\\src\")",
+      "Bash(cmd /c \"dir \\\\"E:\\\\projects\\\\bussiness projects\\\\clinic management system\\\\frontend\\\\src\\\\\" 2>&1\")",
+      "Bash(bun install:*)",
+      "Bash(cmd.exe /c \"where bun\")",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx tsc:*)",
+      "Bash(bash \"C:/Users/Osama/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh\" --project-dir \"E:/projects/bussiness projects/clinic management system\")",
+      "Bash(bun --version)",
+      "Bash(npm --version)",
+      "Bash(pnpm --version)",
+      "Bash(docker --version)",
+      "Bash(Get-ChildItem -Path \"frontend\\src\\features\\settings\" -Directory)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

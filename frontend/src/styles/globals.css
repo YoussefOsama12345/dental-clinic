@@ -1,0 +1,209 @@
+@import "tailwindcss";
+@import "./sonner.css";
+@import "./command-palette.css";
+
+@theme {
+  --color-sidebar:            #f0f4f8;
+  --color-sidebar-foreground: #374151;
+  --color-sidebar-primary:    #04CF9E;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent:     #e8f5f2;
+  --color-sidebar-accent-foreground: #0f172a;
+  --color-sidebar-border:     #d1d9e0;
+  --color-header:             #ffffff;
+  --color-card:               #ffffff;
+  --color-muted:              #f8fafc;
+  --color-muted-foreground:   #94a3b8;
+  --color-border:             #e2e8f0;
+  --color-destructive:        #ef4444;
+  --color-foreground:         #0f172a;
+  --color-primary:            #04CF9E;
+  --color-primary-foreground: #ffffff;
+  --color-background:         #ffffff;
+}
+
+@layer base {
+  :root {
+    --background:        #ffffff;
+    --foreground:        #0f172a;
+    --primary:           #04CF9E;
+    --primary-foreground:#ffffff;
+    --ring:              #04CF9E;
+    --border:            #e2e8f0;
+    --muted:             #f8fafc;
+    --muted-foreground:  #94a3b8;
+    --card:              #ffffff;
+    --input:             #e2e8f0;
+    --accent:            #f1f5f9;
+    --accent-foreground: #0f172a;
+    --destructive:       #ef4444;
+
+    /* Nav interaction surfaces */
+    --nav-active-bg:   rgba(0, 0, 0, 0.06);
+    --nav-active-text: #0f172a;
+    --nav-hover-bg:    rgba(0, 0, 0, 0.04);
+    --nav-hover-text:  #0f172a;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ── Override browser autofill styling ──────────────────────────────────── */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #f8fafc inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    caret-color: #0f172a;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input[type="button"]:disabled,
+  input[type="submit"]:disabled,
+  input[type="reset"]:disabled {
+    cursor: not-allowed;
+  }
+
+  :lang(ar) body,
+  [dir="rtl"] {
+    font-family: 'Cairo', sans-serif;
+  }
+}
+
+/* ── Gradient utilities ─────────────────────────────────────────────────────── */
+@utility bg-gradient-primary {
+  background-image: linear-gradient(135deg, #04CF9E 0%, #03b589 100%);
+}
+
+@utility bg-gradient-primary-btn {
+  background-image: linear-gradient(134deg, #04CF9E 0%, #03b589 100%);
+}
+
+@utility bg-gradient-primary-h {
+  background-image: linear-gradient(90deg, #04CF9E 0%, #03b589 100%);
+}
+
+@utility bg-gradient-primary-rev {
+  background-image: linear-gradient(135deg, #34D7AC 0%, #04CF9E 100%);
+}
+
+@utility bg-gradient-primary-progress {
+  background-image: linear-gradient(138deg, #04CF9E 0%, #03b589 100%);
+}
+
+@utility bg-gradient-primary-bar {
+  background-image: linear-gradient(90deg, #04CF9E 0%, #6EE7C7 100%);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #04CF9E20 transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #04CF9E40;
+    border-radius: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #04CF9E;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: #03b589;
+  }
+
+  .bg-sidebar ::-webkit-scrollbar-thumb {
+    background: #04CF9E30;
+  }
+
+  .bg-sidebar ::-webkit-scrollbar-thumb:hover {
+    background: #04CF9E;
+  }
+}
+
+/* ── react-big-calendar theming (single-hue teal) ───────────────────────────── */
+.rbc-calendar { font-family: inherit; }
+.rbc-toolbar { margin-bottom: 16px; gap: 8px; flex-wrap: wrap; }
+.rbc-toolbar button {
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.rbc-toolbar button:hover { background: #f1f5f9; color: #0f172a; }
+.rbc-toolbar button.rbc-active,
+.rbc-toolbar button.rbc-active:hover {
+  background: #04CF9E !important;
+  border-color: #04CF9E;
+  color: #fff;
+  box-shadow: none;
+}
+.rbc-toolbar-label { font-weight: 700; font-size: 15px; color: #0f172a; }
+.rbc-header { padding: 8px 4px; font-weight: 600; font-size: 12px; color: #64748b; border-color: #eef2f6; }
+.rbc-month-view, .rbc-time-view, .rbc-time-header-content,
+.rbc-time-content, .rbc-day-bg, .rbc-month-row, .rbc-header,
+.rbc-time-header.rbc-overflowing, .rbc-timeslot-group { border-color: #eef2f6; }
+.rbc-off-range-bg { background: #f8fafc; }
+.rbc-today { background: rgba(4, 207, 158, 0.07); }
+.rbc-button-link { color: #334155; }
+.rbc-now .rbc-button-link { color: #04CF9E; font-weight: 700; }
+.rbc-current-time-indicator { background: #04CF9E; height: 2px; }
+.rbc-event { border: none; padding: 2px 6px; font-size: 12px; }
+.rbc-event.rbc-selected { box-shadow: 0 0 0 2px rgba(4, 207, 158, 0.35); }
+.rbc-event:focus { outline: none; }
+.rbc-show-more { color: #04CF9E; font-weight: 600; }
+.rbc-time-slot { color: #94a3b8; }
+.rbc-agenda-view table.rbc-agenda-table,
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td { border-color: #eef2f6; }
+
+/* RTL — RBC is not RTL-aware; flip the essentials. */
+[dir="rtl"] .rbc-toolbar,
+[dir="rtl"] .rbc-btn-group { direction: rtl; }
+[dir="rtl"] .rbc-time-content > .rbc-time-gutter { order: 2; }
